@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (beta)
+
+- Fixed disconnects when switching servers behind a proxy (e.g. lobby → game mode). The proxy can still send game packets while the client is already in the configuration phase; vanilla ignores them and Via tried to translate them as configuration packets ("UPDATE_TAGS" error). They are now dropped and only logged, like vanilla does. Translation errors outside that phase still disconnect.
+
 ## 0.1.0 (first beta)
 
 - Join 26.3 servers from a 1.21.11 client, with or without ViaVersion on the server.

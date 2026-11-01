@@ -94,7 +94,7 @@ public final class ViaTranslator {
         final UserConnection user = ViaChannelInitializer.createUserConnection(channel, true);
 
         final ChannelPipeline pipeline = channel.pipeline();
-        pipeline.addBefore(HandlerNames.INBOUND_CONFIG, ViaDecodeHandler.NAME, new ViaDecodeHandler(user));
+        pipeline.addBefore(HandlerNames.INBOUND_CONFIG, ViaDecodeHandler.NAME, new ConfigTolerantDecoder(user));
         pipeline.addBefore(HandlerNames.ENCODER, ViaEncodeHandler.NAME, new ViaEncodeHandler(user));
         // Via puede sacar varios paquetes de uno: que no se lean de golpe con autoRead apagado
         pipeline.addAfter(ViaDecodeHandler.NAME, "via-flow-control", new FlowControlHandler() {

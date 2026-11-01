@@ -6,7 +6,7 @@ run-server/
 tools/servers/
 logs/
 # Notas internas de desarrollo
-PLAN.md
+PLAN*.md
 *.iml
 .idea/
 __pycache__/
