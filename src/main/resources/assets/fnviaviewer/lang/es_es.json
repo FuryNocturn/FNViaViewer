@@ -1,0 +1,20 @@
+{
+  "fnviaviewer.pack.title": "FNViaViewer: contenido de %s",
+  "fnviaviewer.pack.description": "Bloques, items y sonidos de Minecraft %s, bajados de Mojang",
+  "fnviaviewer.toast.download_failed.title": "FNViaViewer",
+  "fnviaviewer.toast.download_failed.body": "No se pudieron bajar los assets de %s. Los bloques nuevos se verán como otros antiguos.",
+  "fnviaviewer.toast.download_done.title": "FNViaViewer",
+  "fnviaviewer.toast.download_done.body": "Assets de %s bajados de nuevo.",
+  "fnviaviewer.config.title": "FNViaViewer",
+  "fnviaviewer.config.enabled": "Entrar en servidores más nuevos",
+  "fnviaviewer.config.enabled.tooltip": "Traduce la conexión con servidores de una versión más nueva. Desactivado, el juego funciona como vanilla.",
+  "fnviaviewer.config.blocks": "Bloques nuevos",
+  "fnviaviewer.config.blocks.tooltip": "Muestra los bloques de la versión nueva. Desactivado, se ven como el bloque antiguo más parecido.",
+  "fnviaviewer.config.items": "Items nuevos",
+  "fnviaviewer.config.items.tooltip": "Muestra los items de la versión nueva. Desactivado, se ven como el item antiguo más parecido.",
+  "fnviaviewer.config.sounds": "Sonidos nuevos",
+  "fnviaviewer.config.sounds.tooltip": "Usa los sonidos de la versión nueva. Desactivado, suenan los antiguos.",
+  "fnviaviewer.config.redownload": "Volver a bajar los assets",
+  "fnviaviewer.config.redownload.tooltip": "Borra las texturas, modelos y sonidos bajados y los vuelve a bajar de Mojang.",
+  "fnviaviewer.config.rejoin": "Los cambios se aplican del todo al volver a entrar al servidor."
+}

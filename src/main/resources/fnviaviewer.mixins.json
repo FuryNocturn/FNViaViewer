@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "es.furynocturn.viaviewer.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "BlockBehaviourAccessor"
+  ],
+  "client": [
+    "MixinConnectScreen_1",
+    "MixinConnection",
+    "MixinConnection_1",
+    "MixinIrisWorldRenderingSettings",
+    "MixinPackRepository"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

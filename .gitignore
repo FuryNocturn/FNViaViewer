@@ -1,0 +1,11 @@
+.gradle/
+build/
+out/
+run/
+run-server/
+tools/servers/
+logs/
+# Notas internas de desarrollo
+PLAN.md
+*.iml
+.idea/

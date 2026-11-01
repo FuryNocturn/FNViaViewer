@@ -1,0 +1,20 @@
+{
+  "fnviaviewer.pack.title": "FNViaViewer: %s content",
+  "fnviaviewer.pack.description": "Blocks, items and sounds from Minecraft %s, downloaded from Mojang",
+  "fnviaviewer.toast.download_failed.title": "FNViaViewer",
+  "fnviaviewer.toast.download_failed.body": "Couldn't download the %s assets. New blocks will look like older ones.",
+  "fnviaviewer.toast.download_done.title": "FNViaViewer",
+  "fnviaviewer.toast.download_done.body": "%s assets downloaded again.",
+  "fnviaviewer.config.title": "FNViaViewer",
+  "fnviaviewer.config.enabled": "Join newer servers",
+  "fnviaviewer.config.enabled.tooltip": "Translate the connection to servers on a newer version. When off, the game behaves like vanilla.",
+  "fnviaviewer.config.blocks": "New blocks",
+  "fnviaviewer.config.blocks.tooltip": "Show blocks from the newer version. When off, they look like the closest older block.",
+  "fnviaviewer.config.items": "New items",
+  "fnviaviewer.config.items.tooltip": "Show items from the newer version. When off, they look like the closest older item.",
+  "fnviaviewer.config.sounds": "New sounds",
+  "fnviaviewer.config.sounds.tooltip": "Play sounds from the newer version. When off, older sounds are used.",
+  "fnviaviewer.config.redownload": "Download assets again",
+  "fnviaviewer.config.redownload.tooltip": "Deletes the downloaded textures, models and sounds and downloads them again from Mojang.",
+  "fnviaviewer.config.rejoin": "Changes apply fully after rejoining the server."
+}

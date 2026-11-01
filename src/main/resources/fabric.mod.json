@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "fnviaviewer",
+  "version": "${version}",
+  "name": "FNViaViewer",
+  "description": "See the blocks, items and sounds of newer Minecraft versions on an older client when joining newer servers.",
+  "authors": ["FuryNocturn"],
+  "contributors": [
+    {
+      "name": "ViaVersion / ViaFabricPlus team (protocol translation, GPLv3)",
+      "contact": { "homepage": "https://viaversion.com" }
+    }
+  ],
+  "contact": {
+    "sources": "https://github.com/FuryNocturn/FNViaViewer",
+    "issues": "https://github.com/FuryNocturn/FNViaViewer/issues"
+  },
+  "license": "GPL-3.0-only",
+  "icon": "assets/fnviaviewer/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "main": ["es.furynocturn.viaviewer.content.NewContent"],
+    "client": ["es.furynocturn.viaviewer.FNViaViewer"],
+    "modmenu": ["es.furynocturn.viaviewer.config.ModMenuIntegration"]
+  },
+  "mixins": ["fnviaviewer.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.0",
+    "fabric-api": "*",
+    "minecraft": "1.21.11",
+    "java": ">=21"
+  },
+  "breaks": {
+    "viafabricplus": "*",
+    "viafabric": "*"
+  }
+}

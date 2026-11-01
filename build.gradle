@@ -1,0 +1,73 @@
+plugins {
+    // Loom 1.14 es el recomendado por Fabric para 1.21.11
+    id 'fabric-loom' version '1.14-SNAPSHOT'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    maven { name = 'ViaVersion'; url = 'https://repo.viaversion.com' }
+    maven { name = 'TerraformersMC'; url = 'https://maven.terraformersmc.com/releases' }
+    mavenCentral()
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    // Mappings oficiales de Mojang: mismos nombres que ViaFabricPlus y que 26.x
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    // Opcional: solo para la pantalla de config en la lista de mods
+    modCompileOnly "com.terraformersmc:modmenu:17.0.1"
+
+    // Via va dentro del jar (jar-in-jar)
+    implementation "com.viaversion:viaversion-common:${project.via_version}"
+    implementation "com.viaversion:viabackwards-common:${project.via_version}"
+    include "com.viaversion:viaversion-common:${project.via_version}"
+    include "com.viaversion:viabackwards-common:${project.via_version}"
+}
+
+// Herramientas de desarrollo (no van en el jar). Ver tools/gen_content.py
+sourceSets {
+    tools {
+        java.srcDir 'src/tools/java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+
+tasks.register('fallbackTool', JavaExec) {
+    description = 'Calcula los sustitutos con Via y comprueba el parche de tablas'
+    classpath = sourceSets.tools.runtimeClasspath
+    mainClass = 'es.furynocturn.viaviewer.tools.FallbackTool'
+    args file('src/main/resources/fnviaviewer/content/26.3.json').absolutePath, file('build/via-tool').absolutePath
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    it.options.release = 21
+}
+
+java {
+    withSourcesJar()
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+}
