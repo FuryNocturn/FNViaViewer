@@ -9,3 +9,5 @@ logs/
 PLAN.md
 *.iml
 .idea/
+__pycache__/
+docs/store/screenshots/
