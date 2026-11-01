@@ -3,7 +3,10 @@
 
 <p align="center">
   <a href="README.md"><b>Español 🇪🇸</b></a> |
-  <a href="README_EN.md"><b>English 🇺🇸</b></a>
+  <a href="README_EN.md"><b>English 🇺🇸</b></a> |
+  <a href="https://modrinth.com/mod/fnviaviewer"><b>Modrinth</b></a> |
+  <a href="https://www.curseforge.com/minecraft/mc-mods/fnviaviewer"><b>CurseForge</b></a> |
+  <a href="https://github.com/FuryNocturn/FNViaViewer/releases"><b>Downloads 📥</b></a>
 </p>
 
 <p align="center">
