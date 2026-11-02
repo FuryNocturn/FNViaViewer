@@ -7,6 +7,7 @@ import es.furynocturn.viaviewer.config.ViewerConfig;
 import es.furynocturn.viaviewer.content.ContentDescriptor;
 import es.furynocturn.viaviewer.content.MappingPatcher;
 import es.furynocturn.viaviewer.content.NewContent;
+import es.furynocturn.viaviewer.entity.NewEntities;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.commands.ViaCommandHandler;
@@ -67,6 +68,7 @@ public final class ViaTranslator {
             }
             try {
                 MappingPatcher.patch(descriptor, NewContent.clientIds(), ViewerConfig.get().toggles());
+                NewEntities.captureCushionColors();
             } catch (final ReflectiveOperationException e) {
                 throw new IllegalStateException(e);
             }
@@ -92,6 +94,7 @@ public final class ViaTranslator {
     public static void inject(final Channel channel, final ProtocolVersion target) {
         channel.attr(TARGET_VERSION).set(target);
         final UserConnection user = ViaChannelInitializer.createUserConnection(channel, true);
+        NewEntities.onConnect(user);
 
         final ChannelPipeline pipeline = channel.pipeline();
         pipeline.addBefore(HandlerNames.INBOUND_CONFIG, ViaDecodeHandler.NAME, new ConfigTolerantDecoder(user));

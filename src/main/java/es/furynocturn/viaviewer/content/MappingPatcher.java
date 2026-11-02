@@ -6,7 +6,9 @@ import com.viaversion.viaversion.api.data.FullMappings;
 import com.viaversion.viaversion.api.data.FullMappingsBase;
 import com.viaversion.viaversion.api.data.MappingData;
 import com.viaversion.viaversion.api.data.MappingDataBase;
+import com.viaversion.viaversion.api.data.MappingDataLoader;
 import com.viaversion.viaversion.api.data.Mappings;
+import com.viaversion.viaversion.api.data.ParticleMappings;
 import com.viaversion.viaversion.api.protocol.Protocol;
 import com.viaversion.viaversion.api.protocol.version.ProtocolVersion;
 import com.viaversion.viaversion.libs.fastutil.ints.Int2IntMap;
@@ -14,12 +16,13 @@ import com.viaversion.viaversion.libs.fastutil.objects.Object2IntMap;
 import com.viaversion.viaversion.libs.fastutil.objects.Object2IntOpenHashMap;
 import com.viaversion.viaversion.util.Key;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 /**
- * Cambia las tablas de bloques, estados, items y sonidos de cada paso de ViaBackwards de un
+ * Cambia las tablas de bloques, estados, items, sonidos, particulas y entidades de bloque de cada paso de ViaBackwards de un
  * descriptor por {@link ExtendedMappings}. Sin clases de Minecraft: lo usa tambien FallbackTool.
  */
 public final class MappingPatcher {
@@ -29,12 +32,13 @@ public final class MappingPatcher {
     }
 
     /** Lo que hay en el cliente para cada tipo de tabla. */
-    public record Client(ClientIds blockStates, ClientIds blocks, ClientIds items, ClientIds sounds) {
+    public record Client(ClientIds blockStates, ClientIds blocks, ClientIds items, ClientIds sounds, ClientIds particles,
+                         ClientIds blockEntities) {
     }
 
     /** Que tipos de contenido nuevo pasan (se consulta en cada paquete, asi se puede cambiar en marcha). */
-    public record Toggles(BooleanSupplier blocks, BooleanSupplier items, BooleanSupplier sounds) {
-        public static final Toggles ALL = new Toggles(() -> true, () -> true, () -> true);
+    public record Toggles(BooleanSupplier blocks, BooleanSupplier items, BooleanSupplier sounds, BooleanSupplier particles) {
+        public static final Toggles ALL = new Toggles(() -> true, () -> true, () -> true, () -> true);
     }
 
     private MappingPatcher() {
@@ -63,6 +67,8 @@ public final class MappingPatcher {
         final List<String> blockNames = descriptor.blocks().stream().map(ContentDescriptor.BlockDef::id).toList();
         final List<String> itemNames = descriptor.items().stream().map(ContentDescriptor.Entry::id).toList();
         final List<String> soundNames = descriptor.sounds().stream().map(ContentDescriptor.Entry::id).toList();
+        final List<String> particleNames = descriptor.particles().stream().map(ContentDescriptor.Entry::id).toList();
+        final List<String> blockEntityNames = descriptor.blockEntities().stream().map(ContentDescriptor.Entry::id).toList();
 
         for (int i = 0; i < steps.size(); i++) {
             final ContentDescriptor.Step step = steps.get(i);
@@ -76,6 +82,11 @@ public final class MappingPatcher {
             replace(data, "blockMappings", step.blocks(), first, blockNames.size(), last ? client.blocks() : null, blockNames, toggles.blocks());
             replace(data, "itemMappings", step.items(), first, itemNames.size(), last ? client.items() : null, itemNames, toggles.items());
             replace(data, "soundMappings", step.sounds(), first, soundNames.size(), last ? client.sounds() : null, soundNames, toggles.sounds());
+            // Las entidades de bloque nuevas van con su bloque: si el bloque vuelve al sustituto, la suya tambien
+            replace(data, "blockEntityMappings", step.blockEntities(), first, blockEntityNames.size(), last ? client.blockEntities() : null,
+                blockEntityNames, toggles.blocks());
+            replace(data, "particleMappings", step.particles(), first, particleNames.size(), last ? client.particles() : null,
+                particleNames, toggles.particles());
 
             // Sin esto ViaBackwards renombra los items nuevos ("26.3 Cinnabar") y les pone custom_model_data
             if (data instanceof BackwardsMappingData backwards && backwards.getBackwardsItemMappings() != null) {
@@ -91,7 +102,8 @@ public final class MappingPatcher {
         field.setAccessible(true);
         final Mappings original = (Mappings) field.get(data);
         if (original == null) {
-            if (!introduced.isEmpty()) {
+            if (!introduced.isEmpty() || (client != null && count > 0)) {
+                // En el ultimo paso hacen falta los IDs reales del cliente: sin tabla no hay donde ponerlos
                 throw new IllegalStateException(fieldName + " sin tabla en Via pero con contenido nuevo");
             }
             return; // paso sin cambios en esta tabla: Via deja los IDs tal cual y la zona extendida pasa igual
@@ -101,7 +113,30 @@ public final class MappingPatcher {
         }
         final ExtendedMappings extended = new ExtendedMappings(original, introduced, first, count,
             client != null ? client.ids() : null, client != null ? client.registrySize() : -1, active);
-        field.set(data, original instanceof FullMappings full && names != null ? extendedFull(full, extended, names) : extended);
+        if (original instanceof ParticleMappings particles) {
+            field.set(data, extendedParticles(particles, extended, names));
+        } else {
+            field.set(data, original instanceof FullMappings full && names != null ? extendedFull(full, extended, names) : extended);
+        }
+    }
+
+    /**
+     * ParticleMappings ademas guarda que IDs llevan bloque o item (lo calcula por nombre al construirse):
+     * se rehace con las listas de nombres ampliadas. Huecos (IDs del cliente de otros mods) con nombre propio.
+     */
+    private static ParticleMappings extendedParticles(final ParticleMappings original, final ExtendedMappings extended, final List<String> names) {
+        final FullMappings full = extendedFull(original, extended, names);
+        return new ParticleMappings(new MappingDataLoader.IdentifiersPair(
+            names(full::keyFromId, full.size()), names(full::mappedKeyFromMappedId, full.mappedSize())), extended);
+    }
+
+    private static List<String> names(final Function<Integer, Key> lookup, final int size) {
+        final List<String> list = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            final Key key = lookup.apply(i);
+            list.add(key != null ? Key.stripMinecraftNamespace(key.toString()) : "fnviaviewer:unknown_" + i);
+        }
+        return list;
     }
 
     /** Misma logica de nombres de Via (FullMappingsBase) con las listas ampliadas. */

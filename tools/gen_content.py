@@ -9,7 +9,7 @@ ViaBackwards en orden. Necesita servers/reports-<v>/reports/{blocks,registries}.
 (java -DbundlerMainClass=net.minecraft.data.Main -jar <v>.jar --reports --output reports-<v>).
 
 Contenido:
-- blocks/items/sounds: lo que existe (nid = ID en la version nueva; first = su primer estado) en la version nueva y no en la nativa, en orden de ID de la
+- blocks/items/sounds/particles/block_entities: lo que existe (nid = ID en la version nueva; first = su primer estado) en la version nueva y no en la nativa, en orden de ID de la
   nueva. Su posicion en la lista es su "indice D": el cliente lo registra en ese orden.
 - steps: por cada paso de Via (from -> to), que IDs de 'from' no existen en 'to' y su indice D.
   Los estados van en rangos [primerEstadoFrom, primerIndiceD, numEstados]; block_ids son IDs de
@@ -21,6 +21,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
+# Lo de mobs va en otra version: ViaBackwards sigue poniendo su sustituto
+EXCLUDED = {"particles": {"minecraft:sulfur_cube_goo", "minecraft:pause_mob_growth", "minecraft:reset_mob_growth"}}
 OUT = ROOT.parent / "src" / "main" / "resources" / "fnviaviewer" / "content"
 
 
@@ -36,7 +38,8 @@ def load(version):
         return {key: value["protocol_id"] for key, value in entries.items()}
 
     return {"blocks": blocks, "block_ids": registry("minecraft:block"), "items": registry("minecraft:item"),
-            "sounds": registry("minecraft:sound_event"), "reports": reports}
+            "sounds": registry("minecraft:sound_event"), "particles": registry("minecraft:particle_type"),
+            "block_entities": registry("minecraft:block_entity_type"), "reports": reports}
 
 
 def state_key(block, state):
@@ -71,7 +74,7 @@ def main(chain):
         blocks_out.append(entry)
 
     def new_entries(kind):
-        names = [n for n in newest[kind] if n not in native[kind]]
+        names = [n for n in newest[kind] if n not in native[kind] and n not in EXCLUDED.get(kind, ())]
         return sorted(names, key=lambda n: newest[kind][n])
 
     item_names = new_entries("items")
@@ -88,6 +91,8 @@ def main(chain):
             entry["rarity"] = components["minecraft:rarity"]
         items_out.append(entry)
     sound_index = {n: i for i, n in enumerate(sounds_out)}
+    particles_out = new_entries("particles")
+    block_entities_out = new_entries("block_entities")
 
     steps = []
     for source, target in zip(chain, chain[1:]):
@@ -111,7 +116,7 @@ def main(chain):
         def registry_step(kind, index):
             out = []
             for name, rid in src[kind].items():
-                if name in dst[kind]:
+                if name in dst[kind] or name in EXCLUDED.get(kind, ()):
                     continue
                 if name not in index:
                     raise SystemExit(f"{source}: {kind} {name} no esta en {chain[0]}")
@@ -125,6 +130,8 @@ def main(chain):
             "block_ids": registry_step("block_ids", block_id_index),
             "items": registry_step("items", item_index),
             "sounds": registry_step("sounds", sound_index),
+            "particles": registry_step("particles", {n: i for i, n in enumerate(particles_out)}),
+            "block_entities": registry_step("block_entities", {n: i for i, n in enumerate(block_entities_out)}),
         })
 
     out = {
@@ -133,6 +140,8 @@ def main(chain):
         "blocks": blocks_out,
         "items": items_out,
         "sounds": [{"id": name, "nid": newest["sounds"][name]} for name in sounds_out],
+        "particles": [{"id": name, "nid": newest["particles"][name]} for name in particles_out],
+        "block_entities": [{"id": name, "nid": newest["block_entities"][name]} for name in block_entities_out],
         "steps": steps,
     }
     OUT.mkdir(parents=True, exist_ok=True)
@@ -140,11 +149,13 @@ def main(chain):
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         json.dump(out, f, separators=(",", ":"))
     print(f"{path}: {len(blocks_out)} bloques ({len(block_index)} estados), "
-          f"{len(items_out)} items, {len(sounds_out)} sonidos")
+          f"{len(items_out)} items, {len(sounds_out)} sonidos, {len(particles_out)} particulas, "
+          f"{len(block_entities_out)} entidades de bloque")
     for step in steps:
         states = sum(r[2] for r in step["blocks"])
         print(f"  {step['from']} -> {step['to']}: {states} estados, {len(step['block_ids'])} bloques, "
-              f"{len(step['items'])} items, {len(step['sounds'])} sonidos")
+              f"{len(step['items'])} items, {len(step['sounds'])} sonidos, {len(step['particles'])} particulas, "
+              f"{len(step['block_entities'])} entidades de bloque")
 
 
 if __name__ == "__main__":

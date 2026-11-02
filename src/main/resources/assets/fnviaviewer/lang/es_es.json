@@ -14,6 +14,10 @@
   "fnviaviewer.config.items.tooltip": "Muestra los items de la versión nueva. Desactivado, se ven como el item antiguo más parecido.",
   "fnviaviewer.config.sounds": "Sonidos nuevos",
   "fnviaviewer.config.sounds.tooltip": "Usa los sonidos de la versión nueva. Desactivado, suenan los antiguos.",
+  "fnviaviewer.config.particles": "Partículas nuevas",
+  "fnviaviewer.config.particles.tooltip": "Muestra las partículas de la versión nueva (hojas de álamo, géiseres). Desactivado, salen las antiguas más parecidas.",
+  "fnviaviewer.config.entities": "Entidades nuevas",
+  "fnviaviewer.config.entities.tooltip": "Muestra los barcos de álamo y los cojines con su aspecto real. Desactivado, se ven como los antiguos más parecidos.",
   "fnviaviewer.config.redownload": "Volver a bajar los assets",
   "fnviaviewer.config.redownload.tooltip": "Borra las texturas, modelos y sonidos bajados y los vuelve a bajar de Mojang.",
   "fnviaviewer.config.rejoin": "Los cambios se aplican del todo al volver a entrar al servidor."

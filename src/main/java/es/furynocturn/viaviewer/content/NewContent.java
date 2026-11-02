@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.fabricmc.fabric.api.object.builder.v1.block.type.WoodTypeBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -23,21 +25,35 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CeilingHangingSignBlock;
+import net.minecraft.world.level.block.ShelfBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.StandingSignBlock;
+import net.minecraft.world.level.block.UntintedParticleLeavesBlock;
+import net.minecraft.world.level.block.WallHangingSignBlock;
+import net.minecraft.world.level.block.WallSignBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.properties.BlockSetType;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
 
 /**
- * Registra en el cliente los bloques, items y sonidos del descriptor, con su nombre de la version
+ * Registra en el cliente los bloques, items, sonidos, particulas y entidades de bloque del descriptor, con su nombre de la version
  * nueva (minecraft:...) para que los assets y los shaderpacks los encuentren tal cual.
  * Van al final de los registros: los IDs vanilla no cambian.
  */
 public final class NewContent implements ModInitializer {
 
     private static ContentDescriptor descriptor;
-    private static final List<NewBlock> BLOCKS = new ArrayList<>();
+    private static final List<Block> BLOCKS = new ArrayList<>();
+    private static final List<NewBlock.Layout> LAYOUTS = new ArrayList<>();
+    private static final List<BlockEntityType<?>> BLOCK_ENTITIES = new ArrayList<>();
+    private static WoodType poplar;
     private static final List<Item> ITEMS = new ArrayList<>();
     private static final List<SoundEvent> SOUNDS = new ArrayList<>();
 
@@ -57,12 +73,16 @@ public final class NewContent implements ModInitializer {
             SOUNDS.add(Registry.register(BuiltInRegistries.SOUND_EVENT, id, SoundEvent.createVariableRangeEvent(id)));
         }
 
+        // Antes que los bloques: las hojas de alamo sueltan sus particulas
+        NewParticles.register(descriptor.particles());
+
         final Map<String, Block> blocksById = new HashMap<>();
         for (final ContentDescriptor.BlockDef def : descriptor.blocks()) {
-            final NewBlock block = Registry.register(BuiltInRegistries.BLOCK, blockKey(def.id()), createBlock(def));
+            final Block block = Registry.register(BuiltInRegistries.BLOCK, blockKey(def.id()), createBlock(def));
             BLOCKS.add(block);
             blocksById.put(def.id(), block);
         }
+        registerBlockEntities(blocksById);
 
         for (final ContentDescriptor.Entry entry : descriptor.items()) {
             final ResourceKey<Item> key = ResourceKey.create(Registries.ITEM, Identifier.parse(entry.id()));
@@ -87,15 +107,61 @@ public final class NewContent implements ModInitializer {
         return descriptor;
     }
 
-    public static List<NewBlock> blocks() {
+    public static List<Block> blocks() {
         return BLOCKS;
+    }
+
+    /** Sustitutos de cada bloque nuevo, en el mismo orden que {@link #blocks()}. */
+    public static NewBlock.Layout layout(final int index) {
+        return LAYOUTS.get(index);
+    }
+
+    /**
+     * Entidades de bloque: las nuevas se registran; los carteles, estanterias, etc. de la version nueva
+     * se anaden a las vanilla para que el cliente no descarte las que manda el servidor.
+     * La cama de paja no: en 26.2+ las camas son solo modelo y BedRenderer la dibujaria dos veces.
+     */
+    private static void registerBlockEntities(final Map<String, Block> blocks) {
+        for (final ContentDescriptor.Entry entry : descriptor.blockEntities()) {
+            if (!entry.id().equals("minecraft:potent_sulfur")) {
+                throw new IllegalStateException("Entidad de bloque sin implementar: " + entry.id());
+            }
+            final BlockEntityType<PotentSulfurBlockEntity> type = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
+                Identifier.parse(entry.id()), FabricBlockEntityTypeBuilder.create(PotentSulfurBlockEntity::new, blocks.get(entry.id())).build());
+            PotentSulfurBlockEntity.setType(type);
+            BLOCK_ENTITIES.add(type);
+        }
+        supported(BlockEntityType.SIGN, blocks, "minecraft:poplar_sign", "minecraft:poplar_wall_sign");
+        supported(BlockEntityType.HANGING_SIGN, blocks, "minecraft:poplar_hanging_sign", "minecraft:poplar_wall_hanging_sign");
+        supported(BlockEntityType.SHELF, blocks, "minecraft:poplar_shelf");
+    }
+
+    private static void supported(final BlockEntityType<?> type, final Map<String, Block> blocks, final String... ids) {
+        for (final String id : ids) {
+            final Block block = blocks.get(id);
+            if (block != null) {
+                type.addSupportedBlock(block);
+            }
+        }
+    }
+
+    /** La madera de alamo: sus carteles usan las clases vanilla (texto, edicion) y solo existe en el cliente. */
+    public static boolean isPoplar(final WoodType type) {
+        return poplar != null && type == poplar;
+    }
+
+    private static WoodType poplar() {
+        if (poplar == null) {
+            poplar = WoodTypeBuilder.copyOf(WoodType.BIRCH).register(Identifier.withDefaultNamespace("poplar"), BlockSetType.BIRCH);
+        }
+        return poplar;
     }
 
     private static ResourceKey<Block> blockKey(final String id) {
         return ResourceKey.create(Registries.BLOCK, Identifier.parse(id));
     }
 
-    private static NewBlock createBlock(final ContentDescriptor.BlockDef def) {
+    private static Block createBlock(final ContentDescriptor.BlockDef def) {
         final List<Property<?>> properties = new ArrayList<>();
         def.properties().forEach((name, values) -> properties.add(StringProperty.of(name, values)));
         final BlockState[] fallbacks = new BlockState[def.states()];
@@ -103,6 +169,7 @@ public final class NewContent implements ModInitializer {
             fallbacks[i] = Block.stateById(descriptor.fallback()[def.firstIndex() + i]);
         }
         final NewBlock.Layout layout = new NewBlock.Layout(properties, def.properties(), fallbacks);
+        LAYOUTS.add(layout);
 
         // Lo que es del bloque entero sale del sustituto del primer estado; lo de cada estado, del suyo.
         // Si hay un bloque nativo del mismo material (losa de lana -> lana), dureza/sonido/color salen de el
@@ -142,7 +209,8 @@ public final class NewContent implements ModInitializer {
             props.dynamicShape();
         }
 
-        final NewBlock block = NewBlock.create(layout, props, def.defaults());
+        final Block special = special(def.id(), properties, props);
+        final Block block = special != null ? special : NewBlock.create(layout, props, def.defaults());
         // El orden de estados tiene que ser el de la version nueva: si no, el sustituto y el ID no cuadran
         final List<BlockState> states = block.getStateDefinition().getPossibleStates();
         for (int i = 0; i < states.size(); i++) {
@@ -151,6 +219,33 @@ public final class NewContent implements ModInitializer {
             }
         }
         return block;
+    }
+
+    /**
+     * Bloques que necesitan su clase vanilla para funcionar en el cliente: texto de los carteles,
+     * objetos de la estanteria, postura al dormir, particulas de las hojas. El modelo sigue siendo el
+     * de la version nueva. Sus propiedades son las vanilla (StringProperty.of las reutiliza), asi que
+     * el orden de estados se comprueba igual que en los demas.
+     */
+    private static Block special(final String id, final List<Property<?>> properties, final BlockBehaviour.Properties props) {
+        return switch (id) {
+            case "minecraft:poplar_sign" -> new StandingSignBlock(poplar(), props);
+            case "minecraft:poplar_wall_sign" -> new WallSignBlock(poplar(), props);
+            case "minecraft:poplar_hanging_sign" -> new CeilingHangingSignBlock(poplar(), props);
+            case "minecraft:poplar_wall_hanging_sign" -> new WallHangingSignBlock(poplar(), props);
+            case "minecraft:poplar_shelf" -> new ShelfBlock(props);
+            // Sin entidad de bloque: en 26.2+ las camas no la tienen y BED no admite este bloque (crash al colocarla)
+            case "minecraft:straw_bed" -> new BedBlock(DyeColor.YELLOW, props) {
+                @Override
+                public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
+                    return null;
+                }
+            };
+            case "minecraft:red_poplar_leaves", "minecraft:orange_poplar_leaves", "minecraft:yellow_poplar_leaves" ->
+                new UntintedParticleLeavesBlock(0.01F, NewParticles.simple(id), props);
+            case "minecraft:potent_sulfur" -> PotentSulfurBlock.create(properties.getFirst(), props);
+            default -> null;
+        };
     }
 
     private static final Pattern MATERIAL_VARIANT = Pattern.compile("(.+_(?:wool|concrete))_(?:slab|stairs)");
@@ -211,16 +306,18 @@ public final class NewContent implements ModInitializer {
         final int[] states = new int[descriptor.stateCount()];
         final int[] blocks = new int[BLOCKS.size()];
         for (int b = 0; b < BLOCKS.size(); b++) {
-            final NewBlock block = BLOCKS.get(b);
+            final Block block = BLOCKS.get(b);
             final int first = descriptor.blocks().get(b).firstIndex();
             for (final BlockState state : block.getStateDefinition().getPossibleStates()) {
-                states[first + block.layout().index(state)] = Block.BLOCK_STATE_REGISTRY.getId(state);
+                states[first + LAYOUTS.get(b).index(state)] = Block.BLOCK_STATE_REGISTRY.getId(state);
             }
             blocks[b] = BuiltInRegistries.BLOCK.getId(block);
         }
         final int[] items = ITEMS.stream().mapToInt(BuiltInRegistries.ITEM::getId).toArray();
         final int[] sounds = SOUNDS.stream().mapToInt(BuiltInRegistries.SOUND_EVENT::getId).toArray();
-        for (final int[] ids : List.of(states, blocks, items, sounds)) {
+        final int[] particles = NewParticles.types().stream().mapToInt(BuiltInRegistries.PARTICLE_TYPE::getId).toArray();
+        final int[] blockEntities = BLOCK_ENTITIES.stream().mapToInt(BuiltInRegistries.BLOCK_ENTITY_TYPE::getId).toArray();
+        for (final int[] ids : List.of(states, blocks, items, sounds, particles, blockEntities)) {
             for (final int id : ids) {
                 if (id < 0) {
                     throw new IllegalStateException("Contenido nuevo sin ID en el cliente");
@@ -231,6 +328,8 @@ public final class NewContent implements ModInitializer {
             new MappingPatcher.ClientIds(states, Block.BLOCK_STATE_REGISTRY.size()),
             new MappingPatcher.ClientIds(blocks, BuiltInRegistries.BLOCK.size()),
             new MappingPatcher.ClientIds(items, BuiltInRegistries.ITEM.size()),
-            new MappingPatcher.ClientIds(sounds, BuiltInRegistries.SOUND_EVENT.size()));
+            new MappingPatcher.ClientIds(sounds, BuiltInRegistries.SOUND_EVENT.size()),
+            new MappingPatcher.ClientIds(particles, BuiltInRegistries.PARTICLE_TYPE.size()),
+            new MappingPatcher.ClientIds(blockEntities, BuiltInRegistries.BLOCK_ENTITY_TYPE.size()));
     }
 }

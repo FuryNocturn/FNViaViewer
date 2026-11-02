@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/servidores-26.3-brightgreen" alt="Servidores 26.3">
   <img src="https://img.shields.io/badge/loader-Fabric-dbd0b4" alt="Fabric">
   <img src="https://img.shields.io/badge/licencia-GPL--3.0-red" alt="Licencia GPL-3.0">
-  <img src="https://img.shields.io/badge/versión-0.1.0--beta-orange" alt="Versión">
+  <img src="https://img.shields.io/badge/versión-0.2.0--beta-orange" alt="Versión">
 </p>
 
 ---
@@ -37,11 +37,14 @@ Los traductores de protocolo como ViaVersion/ViaBackwards dejan entrar con un cl
 * **🧱 Muestra el contenido real:** los bloques, items y sonidos de 26.3 se añaden a tu cliente, y la traducción los deja pasar en vez de sustituirlos.
 * **🏃 Movimiento fluido:** cada bloque nuevo toma la colisión, la forma, la luz, la dureza y el color del mapa del bloque que habría puesto ViaBackwards. Así lo que predice tu cliente coincide con el servidor y no hay tirones.
 * **🔊 Sonidos nuevos** donde 26.3 los tiene: cinabrio, azufre, hojas de álamo y otros.
+* **🪧 Bloques que funcionan:** los carteles de álamo muestran su texto, la estantería enseña sus objetos y en la cama de paja se duerme con la postura correcta.
+* **✨ Partículas y géiseres:** hojas de álamo que caen, y géiseres con burbujas, gas y erupciones que te lanzan hacia arriba, como en 26.3.
+* **⛵ Barcos de álamo y cojines** con su aspecto real.
 * **🛡️ No toca nada más:** en servidores de tu misma versión el juego es exactamente vanilla.
 
 ### 📦 Contenido de 26.3 incluido
 
-**120 bloques** (5.852 estados), **153 items** y **153 sonidos**. Entre ellos: todo el juego de madera de álamo, los bloques de construcción de cinabrio y azufre, losas y escaleras de lana y hormigón de todos los colores, el diente de león dorado, el arbusto rojo, el políporo, la cama de paja, los cojines y los nuevos mapas de exploración.
+**120 bloques** (5.852 estados), **153 items**, **153 sonidos**, **10 partículas** y 3 entidades (barco de álamo, barco de álamo con cofre y cojín). Entre ellos: todo el juego de madera de álamo, los bloques de construcción de cinabrio y azufre, losas y escaleras de lana y hormigón de todos los colores, el diente de león dorado, el arbusto rojo, el políporo, la cama de paja, los cojines y los nuevos mapas de exploración.
 
 ---
 
@@ -60,7 +63,7 @@ Con [Mod Menu](https://modrinth.com/mod/modmenu) instalado tienes una pantalla d
 | Opción | Qué hace |
 | :--- | :--- |
 | **Entrar en servidores más nuevos** | Activa o desactiva la traducción. Desactivada, el juego es vanilla. |
-| **Bloques / items / sonidos nuevos** | Muestra cada tipo de contenido nuevo, o lo cambia por su parecido antiguo. |
+| **Bloques / items / sonidos / partículas / entidades nuevos** | Muestra cada tipo de contenido nuevo, o lo cambia por su parecido antiguo. |
 | **Volver a bajar los assets** | Borra la cache y la vuelve a bajar de Mojang. |
 
 La configuración se guarda en `config/fnviaviewer.json`.
@@ -79,11 +82,11 @@ La configuración se guarda en `config/fnviaviewer.json`.
 
 ---
 
-## ⚠️ Limitaciones conocidas (0.1.0)
+## ⚠️ Limitaciones conocidas (0.2.0)
 
-* Los carteles y carteles colgantes se ven, pero **sin su texto**. Las camas y estanterías de 26.3 son solo visuales.
-* **Los mobs y modelos de entidad nuevos** (barcos de álamo, cojines…) siguen saliendo como su sustituto antiguo.
-* Una de las rotaciones del modelo del cartel colgante no se puede representar en 1.21.11 y sale con la textura de "falta modelo".
+* **Los mobs nuevos** (el sulfur cube) siguen saliendo como su sustituto antiguo. Llegan en la 0.3.0.
+* Los efectos del géiser (burbujas, gas, erupción y empuje) están **reprogramados** para parecerse a los de 26.3: pueden no ser idénticos.
+* Barcos de álamo y cojines solo cambian de aspecto: en la red y en la física siguen siendo su sustituto (barco de abedul y bloque que cae).
 * Por ahora solo **1.21.11 → 26.3**. Está previsto añadir más versiones, tanto más nuevas como más antiguas.
 
 ---

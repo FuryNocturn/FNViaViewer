@@ -1,6 +1,5 @@
 package es.furynocturn.viaviewer.mixin;
 
-import es.furynocturn.viaviewer.content.NewBlock;
 import es.furynocturn.viaviewer.content.NewContent;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,9 +23,9 @@ public abstract class MixinIrisWorldRenderingSettings {
         if (ids == null) {
             return;
         }
-        for (final NewBlock block : NewContent.blocks()) {
-            for (final BlockState state : block.getStateDefinition().getPossibleStates()) {
-                final BlockState fallback = block.layout().fallback(state);
+        for (int b = 0; b < NewContent.blocks().size(); b++) {
+            for (final BlockState state : NewContent.blocks().get(b).getStateDefinition().getPossibleStates()) {
+                final BlockState fallback = NewContent.layout(b).fallback(state);
                 if (!ids.containsKey(state) && ids.containsKey(fallback)) {
                     ids.put(state, ids.getInt(fallback));
                 }

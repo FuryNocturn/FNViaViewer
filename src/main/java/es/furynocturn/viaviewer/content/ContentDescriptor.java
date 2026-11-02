@@ -18,10 +18,11 @@ import java.util.Map;
 /**
  * Lo que trae una version nueva y la nativa no (lo genera tools/gen_content.py + FallbackTool).
  * Solo usa Via (sin clases de Minecraft) para poder probarlo fuera del juego.
- * Cada cosa nueva tiene un "indice D": su posicion en blocks (por estado), items o sounds.
+ * Cada cosa nueva tiene un "indice D": su posicion en blocks (por estado), items, sounds, particles o blockEntities.
  */
 public record ContentDescriptor(String version, String nativeVersion, List<BlockDef> blocks, List<Entry> items,
-                                List<Entry> sounds, List<Step> steps, int[] fallback) {
+                                List<Entry> sounds, List<Entry> particles, List<Entry> blockEntities, List<Step> steps,
+                                int[] fallback) {
 
     /** properties en el orden del report; firstIndex = indice D de su primer estado. */
     public record BlockDef(String id, int newestId, int firstState, int states, int firstIndex,
@@ -33,7 +34,8 @@ public record ContentDescriptor(String version, String nativeVersion, List<Block
     }
 
     /** IDs de 'from' que no existen en 'to' -> indice D. */
-    public record Step(String from, String to, Int2IntMap blockStates, Int2IntMap blocks, Int2IntMap items, Int2IntMap sounds) {
+    public record Step(String from, String to, Int2IntMap blockStates, Int2IntMap blocks, Int2IntMap items, Int2IntMap sounds,
+                       Int2IntMap particles, Int2IntMap blockEntities) {
     }
 
     public static ContentDescriptor load(final InputStream in) throws IOException {
@@ -75,7 +77,8 @@ public record ContentDescriptor(String version, String nativeVersion, List<Block
                 }
             }
             steps.add(new Step(step.get("from").getAsString(), step.get("to").getAsString(), states,
-                pairs(step.getAsJsonArray("block_ids")), pairs(step.getAsJsonArray("items")), pairs(step.getAsJsonArray("sounds"))));
+                pairs(step.getAsJsonArray("block_ids")), pairs(step.getAsJsonArray("items")), pairs(step.getAsJsonArray("sounds")),
+                pairs(step.getAsJsonArray("particles")), pairs(step.getAsJsonArray("block_entities"))));
         }
 
         int[] fallback = null;
@@ -87,7 +90,8 @@ public record ContentDescriptor(String version, String nativeVersion, List<Block
             }
         }
         return new ContentDescriptor(json.get("version").getAsString(), json.get("native").getAsString(), blocks,
-            entries(json.getAsJsonArray("items")), entries(json.getAsJsonArray("sounds")), steps, fallback);
+            entries(json.getAsJsonArray("items")), entries(json.getAsJsonArray("sounds")), entries(json.getAsJsonArray("particles")),
+            entries(json.getAsJsonArray("block_entities")), steps, fallback);
     }
 
     public int stateCount() {

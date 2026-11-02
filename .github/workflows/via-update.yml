@@ -1,0 +1,117 @@
+# Cuando sale un ViaVersion/ViaBackwards nuevo: sube la version en gradle.properties, pasa las
+# comprobaciones de fallbackTool, compila y deja un BORRADOR de release con el jar en una rama.
+# Publicar (release y tiendas) lo hace una persona. Si algo falla, abre una incidencia.
+name: Actualizar Via
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: via-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Buscar version nueva
+        id: check
+        run: |
+          set -euo pipefail
+          current=$(sed -n 's/^via_version=//p' gradle.properties)
+          vv=$(gh api repos/ViaVersion/ViaVersion/releases/latest --jq .tag_name)
+          vb=$(gh api repos/ViaVersion/ViaBackwards/releases/latest --jq .tag_name)
+          for v in "$vv" "$vb"; do
+            [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Etiqueta inesperada: $v"; exit 1; }
+          done
+          # Hace falta la misma version de los dos
+          latest=$(printf '%s\n%s\n' "$vv" "$vb" | sort -V | head -1)
+          newest=$(printf '%s\n%s\n' "$current" "$latest" | sort -V | tail -1)
+          if [ "$latest" = "$current" ] || [ "$newest" = "$current" ]; then
+            echo "Via $current ya es la ultima ($vv / $vb)"
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          branch="via-$latest"
+          if git ls-remote --exit-code --heads origin "$branch" > /dev/null; then
+            echo "La rama $branch ya existe: no se repite"
+            echo "update=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mod=$(sed -n 's/^mod_version=//p' gradle.properties)
+          next="${mod%.*}.$(( ${mod##*.} + 1 ))"
+          {
+            echo "update=true"
+            echo "current=$current"
+            echo "via=$latest"
+            echo "mod=$next"
+            echo "branch=$branch"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.update == 'true'
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Cambiar versiones
+        if: steps.check.outputs.update == 'true'
+        env:
+          VIA: ${{ steps.check.outputs.via }}
+          MOD: ${{ steps.check.outputs.mod }}
+        run: |
+          sed -i "s/^via_version=.*/via_version=$VIA/; s/^mod_version=.*/mod_version=$MOD/" gradle.properties
+
+      - name: Comprobar tablas y compilar
+        id: build
+        if: steps.check.outputs.update == 'true'
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew --no-daemon fallbackTool build 2>&1 | tee build.log
+
+      - name: Rama y borrador de release
+        if: steps.check.outputs.update == 'true' && steps.build.outcome == 'success'
+        env:
+          VIA: ${{ steps.check.outputs.via }}
+          MOD: ${{ steps.check.outputs.mod }}
+          BRANCH: ${{ steps.check.outputs.branch }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add gradle.properties src/main/resources/fnviaviewer/content/26.3.json
+          git commit -m "Via $VIA (FNViaViewer $MOD)"
+          git push origin "$BRANCH"
+          gh release create "v$MOD" "build/libs/fnviaviewer-$MOD.jar" --draft --prerelease --target "$BRANCH" \
+            --title "FNViaViewer $MOD" \
+            --notes "Borrador automático: ViaVersion y ViaBackwards $VIA. fallbackTool y la compilación han pasado; falta probarlo en juego antes de publicar."
+
+      - name: Abrir incidencia si falla
+        if: failure() && steps.check.outputs.update == 'true'
+        env:
+          VIA: ${{ steps.check.outputs.via }}
+          CURRENT: ${{ steps.check.outputs.current }}
+        run: |
+          {
+            echo "La actualización automática de Via $CURRENT → $VIA ha fallado."
+            echo
+            echo '```'
+            tail -n 60 build.log 2>/dev/null || echo "(sin log de compilación)"
+            echo '```'
+            echo
+            echo "Ejecución: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          } > issue.md
+          gh issue create --title "Actualizar a Via $VIA ha fallado" --body-file issue.md

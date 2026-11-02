@@ -38,7 +38,9 @@ public final class AssetCache {
     private static final String MANIFEST = "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json";
     private static final String OBJECTS = "https://resources.download.minecraft.net/";
     private static final String PREFIX = "assets/minecraft/";
-    private static final List<String> FOLDERS = List.of("blockstates/", "models/", "items/", "textures/");
+    private static final List<String> FOLDERS = List.of("blockstates/", "models/", "items/", "textures/", "particles/");
+    /** Sube cuando cambia lo que se saca del client.jar (2: particles/): las caches viejas se rehacen. */
+    private static final int CLIENT_FORMAT = 2;
     private static final Pattern SAFE_PATH = Pattern.compile("[a-z0-9_./-]+");
     private static final Gson GSON = new Gson();
     private static final org.slf4j.Logger LOGGER = es.furynocturn.viaviewer.via.ViaTranslator.LOGGER;
@@ -72,9 +74,10 @@ public final class AssetCache {
         }
         boolean changed = false;
 
-        if (!state.has("client")) {
+        if (!state.has("client_format") || state.get("client_format").getAsInt() < CLIENT_FORMAT) {
             this.extractClientJar();
-            state.addProperty("client", true);
+            state.remove("client");
+            state.addProperty("client_format", CLIENT_FORMAT);
             save(statePath, state);
             changed = true;
         }
@@ -84,6 +87,10 @@ public final class AssetCache {
             save(statePath, state);
             changed = true;
         }
+        if (SignTextures.generate(this.dir)) {
+            changed = true;
+        }
+        SignTextures.scan(this.dir);
         // en_us viene del client.jar; el idioma del jugador, del indice de assets
         final JsonArray langs = state.getAsJsonArray("langs");
         if (!languageCode.equals("en_us") && !langs.contains(GSON.toJsonTree(languageCode))) {

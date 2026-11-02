@@ -105,6 +105,8 @@ public final class FallbackTool {
         final int nativeBlocks = size(chain, MappingData::getBlockMappings);
         final int nativeItems = size(chain, MappingData::getItemMappings);
         final int nativeSounds = size(chain, MappingData::getSoundMappings);
+        final int nativeParticles = size(chain, MappingData::getParticleMappings);
+        final int nativeBlockEntities = size(chain, MappingData::getBlockEntityMappings);
 
         // 1. Sustituto original de cada estado nuevo
         final int[] fallback = new int[states];
@@ -117,6 +119,7 @@ public final class FallbackTool {
 
         final int[] itemFallback = descriptor.items().stream().mapToInt(e -> run(chain, MappingData::getItemMappings, e.newestId())).toArray();
         final int[] soundFallback = descriptor.sounds().stream().mapToInt(e -> run(chain, MappingData::getSoundMappings, e.newestId())).toArray();
+        final int[] particleFallback = descriptor.particles().stream().mapToInt(e -> run(chain, MappingData::getParticleMappings, e.newestId())).toArray();
         final java.util.concurrent.atomic.AtomicBoolean on = new java.util.concurrent.atomic.AtomicBoolean(true);
 
         // 2. Parchear como en el cliente (IDs nuevos justo detras de los vanilla)
@@ -125,7 +128,10 @@ public final class FallbackTool {
             MappingPatcher.sequential(nativeStates, states),
             MappingPatcher.sequential(nativeBlocks, descriptor.blocks().size()),
             MappingPatcher.sequential(nativeItems, descriptor.items().size()),
-            MappingPatcher.sequential(nativeSounds, descriptor.sounds().size())), new MappingPatcher.Toggles(on::get, on::get, on::get));
+            MappingPatcher.sequential(nativeSounds, descriptor.sounds().size()),
+            MappingPatcher.sequential(nativeParticles, descriptor.particles().size()),
+            MappingPatcher.sequential(nativeBlockEntities, descriptor.blockEntities().size())),
+            new MappingPatcher.Toggles(on::get, on::get, on::get, on::get));
 
         // 3. Comprobar ida, vuelta y que lo vanilla no cambia
         for (final ContentDescriptor.BlockDef block : descriptor.blocks()) {
@@ -138,6 +144,15 @@ public final class FallbackTool {
         }
         checkEntries(chain, nativeItems, descriptor.items(), MappingData::getItemMappings, "item");
         checkEntries(chain, nativeSounds, descriptor.sounds(), MappingData::getSoundMappings, "sonido");
+        checkEntries(chain, nativeParticles, descriptor.particles(), MappingData::getParticleMappings, "particula");
+        checkEntries(chain, nativeBlockEntities, descriptor.blockEntities(), MappingData::getBlockEntityMappings, "entidad de bloque");
+        for (int d = 0; d < descriptor.particles().size(); d++) {
+            final String name = last.getParticleMappings().mappedIdentifier(nativeParticles + d);
+            check(descriptor.particles().get(d).id().equals(name), "nombre de la particula " + descriptor.particles().get(d).id() + " = " + name);
+        }
+        // Las particulas con bloque o item siguen reconociendose despues de rehacer ParticleMappings
+        check(last.getParticleMappings().isBlockParticle(last.getParticleMappings().mappedId("block")), "particula block sigue siendo de bloque");
+        check(last.getParticleMappings().isItemParticle(last.getParticleMappings().mappedId("item")), "particula item sigue siendo de item");
         check(last.getBlockStateMappings().mappedSize() == nativeStates + states, "mappedSize final de estados");
         for (int d = 0; d < descriptor.items().size(); d++) {
             final String name = last.getFullItemMappings().mappedIdentifier(nativeItems + d);
@@ -166,6 +181,9 @@ public final class FallbackTool {
         }
         for (int d = 0; d < soundFallback.length; d++) {
             check(run(chain, MappingData::getSoundMappings, descriptor.sounds().get(d).newestId()) == soundFallback[d], "apagado: sonido " + d);
+        }
+        for (int d = 0; d < particleFallback.length; d++) {
+            check(run(chain, MappingData::getParticleMappings, descriptor.particles().get(d).newestId()) == particleFallback[d], "apagado: particula " + d);
         }
         check(last.getBlockStateMappings().mappedSize() == nativeStates + states, "apagado: mappedSize final de estados");
         on.set(true);

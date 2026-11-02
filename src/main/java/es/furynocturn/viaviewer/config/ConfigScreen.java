@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 public final class ConfigScreen extends Screen {
 
     private static final int WIDTH = 220;
+    private static final int COLUMN = 150;
     private final Screen parent;
 
     public ConfigScreen(final Screen parent) {
@@ -29,17 +30,16 @@ public final class ConfigScreen extends Screen {
             .withTooltip(value -> Tooltip.create(Component.translatable("fnviaviewer.config.enabled.tooltip")))
             .create(x, y, WIDTH, 20, Component.translatable("fnviaviewer.config.enabled"), (button, value) -> config.enabled = value));
         y += 32;
-        this.addRenderableWidget(CycleButton.onOffBuilder(config.blocks)
-            .withTooltip(value -> Tooltip.create(Component.translatable("fnviaviewer.config.blocks.tooltip")))
-            .create(x, y, WIDTH, 20, Component.translatable("fnviaviewer.config.blocks"), (button, value) -> config.blocks = value));
+        // Dos columnas: con seis botones seguidos no caben en pantallas pequenas
+        final int left = this.width / 2 - COLUMN - 4;
+        final int right = this.width / 2 + 4;
+        this.toggle(left, y, "blocks", config.blocks, value -> config.blocks = value);
+        this.toggle(right, y, "items", config.items, value -> config.items = value);
         y += 24;
-        this.addRenderableWidget(CycleButton.onOffBuilder(config.items)
-            .withTooltip(value -> Tooltip.create(Component.translatable("fnviaviewer.config.items.tooltip")))
-            .create(x, y, WIDTH, 20, Component.translatable("fnviaviewer.config.items"), (button, value) -> config.items = value));
+        this.toggle(left, y, "sounds", config.sounds, value -> config.sounds = value);
+        this.toggle(right, y, "particles", config.particles, value -> config.particles = value);
         y += 24;
-        this.addRenderableWidget(CycleButton.onOffBuilder(config.sounds)
-            .withTooltip(value -> Tooltip.create(Component.translatable("fnviaviewer.config.sounds.tooltip")))
-            .create(x, y, WIDTH, 20, Component.translatable("fnviaviewer.config.sounds"), (button, value) -> config.sounds = value));
+        this.toggle(left, y, "entities", config.entities, value -> config.entities = value);
         y += 32;
         this.addRenderableWidget(Button.builder(Component.translatable("fnviaviewer.config.redownload"), button -> {
                 button.active = false;
@@ -50,6 +50,12 @@ public final class ConfigScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(Component.translatable("gui.done"), button -> this.onClose())
             .bounds(x, this.height - 28, WIDTH, 20).build());
+    }
+
+    private void toggle(final int x, final int y, final String key, final boolean value, final java.util.function.Consumer<Boolean> setter) {
+        this.addRenderableWidget(CycleButton.onOffBuilder(value)
+            .withTooltip(v -> Tooltip.create(Component.translatable("fnviaviewer.config." + key + ".tooltip")))
+            .create(x, y, COLUMN, 20, Component.translatable("fnviaviewer.config." + key), (button, v) -> setter.accept(v)));
     }
 
     @Override

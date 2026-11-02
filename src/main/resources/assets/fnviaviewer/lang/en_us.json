@@ -14,6 +14,10 @@
   "fnviaviewer.config.items.tooltip": "Show items from the newer version. When off, they look like the closest older item.",
   "fnviaviewer.config.sounds": "New sounds",
   "fnviaviewer.config.sounds.tooltip": "Play sounds from the newer version. When off, older sounds are used.",
+  "fnviaviewer.config.particles": "New particles",
+  "fnviaviewer.config.particles.tooltip": "Shows the new version's particles (poplar leaves, geysers). Off: the closest old ones are used.",
+  "fnviaviewer.config.entities": "New entities",
+  "fnviaviewer.config.entities.tooltip": "Shows poplar boats and cushions as they really look. Off: they look like the closest old ones.",
   "fnviaviewer.config.redownload": "Download assets again",
   "fnviaviewer.config.redownload.tooltip": "Deletes the downloaded textures, models and sounds and downloads them again from Mojang.",
   "fnviaviewer.config.rejoin": "Changes apply fully after rejoining the server."

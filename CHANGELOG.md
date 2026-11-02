@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 (beta)
+
+- Poplar signs and hanging signs show their text. The 26.3 sign model is used, and only the text is drawn on top.
+- The poplar shelf shows its items, and the straw bed works as a bed (sleeping pose).
+- New particles: falling poplar leaves, and the sulfur geyser's bubbles, noxious gas and eruptions. Geysers also push you up while erupting, like in 26.3. Geyser effects are re-implemented on the client and may not be identical.
+- Poplar boats (with and without chest) and cushions are drawn as they really look, including the cushion color.
+- New settings: "New particles" and "New entities". The settings screen now uses two columns.
+- The asset cache now also keeps the 26.3 particle definitions; existing caches are updated on the next launch.
+- For maintainers: a GitHub Actions workflow checks for new ViaVersion/ViaBackwards releases every day, runs the mapping checks and the build, and leaves a draft release.
+
 ## 0.1.1 (beta)
 
 - Fixed disconnects when switching servers behind a proxy (e.g. lobby → game mode). The proxy can still send game packets while the client is already in the configuration phase; vanilla ignores them and Via tried to translate them as configuration packets ("UPDATE_TAGS" error). They are now dropped and only logged, like vanilla does. Translation errors outside that phase still disconnect.

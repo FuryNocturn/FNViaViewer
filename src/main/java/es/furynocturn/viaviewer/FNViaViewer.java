@@ -11,6 +11,11 @@ import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.SignBlock;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+import es.furynocturn.viaviewer.particle.NewParticleProviders;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.network.chat.Component;
@@ -24,11 +29,19 @@ public final class FNViaViewer implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         // Capa de render (cutout para hojas, puertas...) y tinte: los del sustituto de cada estado
-        for (final NewBlock block : NewContent.blocks()) {
-            BlockRenderLayerMap.putBlock(block, ItemBlockRenderTypes.getChunkRenderType(block.layout().fallbacks()[0]));
+        for (int b = 0; b < NewContent.blocks().size(); b++) {
+            final Block block = NewContent.blocks().get(b);
+            final NewBlock.Layout layout = NewContent.layout(b);
+            // Carteles y camas: el sustituto se dibuja como entidad (capa solida), pero el modelo de 26.3 tiene huecos (cadenas)
+            final boolean modelOnlyInNewVersion = block instanceof SignBlock || block instanceof BedBlock;
+            BlockRenderLayerMap.putBlock(block, modelOnlyInNewVersion ? ChunkSectionLayer.CUTOUT
+                : ItemBlockRenderTypes.getChunkRenderType(layout.fallbacks()[0]));
             ColorProviderRegistry.BLOCK.register((state, level, pos, tint) ->
-                Minecraft.getInstance().getBlockColors().getColor(block.layout().fallback(state), level, pos, tint), block);
+                Minecraft.getInstance().getBlockColors().getColor(layout.fallback(state), level, pos, tint), block);
         }
+
+        NewParticleProviders.register();
+        es.furynocturn.viaviewer.entity.NewEntityRenderers.registerLayers();
 
         ViaTranslator.init(FabricLoader.getInstance().getConfigDir().resolve(MOD_ID).resolve("via"));
         ClientLifecycleEvents.CLIENT_STARTED.register(mc -> updateAssets(mc, false));

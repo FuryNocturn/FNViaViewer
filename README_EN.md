@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/servers-26.3-brightgreen" alt="Servers 26.3">
   <img src="https://img.shields.io/badge/loader-Fabric-dbd0b4" alt="Fabric">
   <img src="https://img.shields.io/badge/license-GPL--3.0-red" alt="License GPL-3.0">
-  <img src="https://img.shields.io/badge/version-0.1.0--beta-orange" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.2.0--beta-orange" alt="Version">
 </p>
 
 ---
@@ -37,11 +37,14 @@ Protocol translators like ViaVersion/ViaBackwards let an older client join a new
 * **🧱 Shows the real content:** the 26.3 blocks, items and sounds are added to your client, and the translation lets them through instead of replacing them.
 * **🏃 Smooth movement:** each new block takes its collision, shape, light, hardness and map color from the block ViaBackwards would have used, so what your client predicts matches the server. No rubber-banding.
 * **🔊 New sounds** where 26.3 has them: cinnabar, sulfur, poplar leaves and others.
+* **🪧 Blocks that work:** poplar signs show their text, the shelf shows its items, and you sleep in the straw bed in the right pose.
+* **✨ Particles and geysers:** falling poplar leaves, and geysers with bubbles, gas and eruptions that push you up, like in 26.3.
+* **⛵ Poplar boats and cushions** as they really look.
 * **🛡️ Leaves everything else alone:** on servers running your own version, the game is exactly vanilla.
 
 ### 📦 26.3 content included
 
-**120 blocks** (5,852 states), **153 items** and **153 sounds**. Among them: the full poplar wood set, cinnabar and sulfur building blocks, wool and concrete slabs and stairs in every color, the golden dandelion, red shrub, shelf mushroom, straw bed, cushions and the new explorer maps.
+**120 blocks** (5,852 states), **153 items**, **153 sounds**, **10 particles** and 3 entities (poplar boat, poplar chest boat and cushion). Among them: the full poplar wood set, cinnabar and sulfur building blocks, wool and concrete slabs and stairs in every color, the golden dandelion, red shrub, shelf mushroom, straw bed, cushions and the new explorer maps.
 
 ---
 
@@ -60,7 +63,7 @@ With [Mod Menu](https://modrinth.com/mod/modmenu) installed, you get a settings 
 | Option | What it does |
 | :--- | :--- |
 | **Join newer servers** | Turns translation on or off. When off, the game is vanilla. |
-| **New blocks / items / sounds** | Show each kind of new content, or fall back to the older look-alike. |
+| **New blocks / items / sounds / particles / entities** | Show each kind of new content, or fall back to the older look-alike. |
 | **Download assets again** | Clears the cache and downloads it again from Mojang. |
 
 Settings are saved in `config/fnviaviewer.json`.
@@ -79,11 +82,11 @@ Settings are saved in `config/fnviaviewer.json`.
 
 ---
 
-## ⚠️ Known limitations (0.1.0)
+## ⚠️ Known limitations (0.2.0)
 
-* Signs and hanging signs are shown, but **their text isn't**. Beds and shelves from 26.3 are visual only.
-* **New mobs and entity models** (poplar boats, cushions…) still show as their older replacements.
-* One rotation of the hanging sign model can't be represented in 1.21.11 and shows the missing-model texture.
+* **New mobs** (the sulfur cube) still show as their older replacement. They're coming in 0.3.0.
+* Geyser effects (bubbles, gas, eruptions and the upward push) are **re-implemented** to look like 26.3's: they may not be identical.
+* Poplar boats and cushions only change their look: on the network and for physics they're still their replacement (birch boat and falling block).
 * Only **1.21.11 → 26.3** for now. More versions, both newer and older, are planned.
 
 ---
