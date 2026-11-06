@@ -25,6 +25,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Slime;
 import net.minecraft.world.item.DyeColor;
 import org.jspecify.annotations.Nullable;
 
@@ -56,6 +57,10 @@ public final class NewEntityRenderers {
         EntityModelLayerRegistry.registerModelLayer(POPLAR_BOAT, BoatModel::createBoatModel);
         EntityModelLayerRegistry.registerModelLayer(POPLAR_CHEST_BOAT, BoatModel::createChestBoatModel);
         EntityModelLayerRegistry.registerModelLayer(CUSHION, CushionModel::createLayer);
+        EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.OUTER, () -> SulfurCubeRenderer.cube(0, 9.0F, 128));
+        EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.INNER, () -> SulfurCubeRenderer.cube(36, 8.0F, 128));
+        EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.SMALL_OUTER, () -> SulfurCubeRenderer.cube(0, 5.0F, 64));
+        EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.SMALL_INNER, () -> SulfurCubeRenderer.cube(20, 4.0F, 64));
     }
 
     /** Se rehacen con cada recarga de recursos, junto a los vanilla. */
@@ -63,10 +68,14 @@ public final class NewEntityRenderers {
         RENDERERS.put(NewEntities.Kind.POPLAR_BOAT, new PoplarBoatRenderer(context, POPLAR_BOAT));
         RENDERERS.put(NewEntities.Kind.POPLAR_CHEST_BOAT, new PoplarBoatRenderer(context, POPLAR_CHEST_BOAT));
         RENDERERS.put(NewEntities.Kind.CUSHION, new CushionRenderer(context));
+        RENDERERS.put(NewEntities.Kind.SULFUR_CUBE, new SulfurCubeRenderer(context));
     }
 
     public static @Nullable EntityRenderer<?, ?> forEntity(final Entity entity) {
         final NewEntities.Kind kind = NewEntities.kind(entity);
+        if (kind == NewEntities.Kind.SULFUR_CUBE && !(entity instanceof Slime)) {
+            return null;
+        }
         return kind != null ? RENDERERS.get(kind) : null;
     }
 
@@ -145,7 +154,7 @@ public final class NewEntityRenderers {
             super.extractRenderState(entity, state, partialTick);
             state.direction = Direction.fromYRot(entity.getYRot());
             state.texture = TEXTURES.get(NewEntities.cushionColor(entity));
-            if (NewEntities.hasReplacementName(entity)) {
+            if (NewEntities.hasReplacementName(entity, "cushion")) {
                 state.nameTag = null;
             }
         }

@@ -68,7 +68,7 @@ public final class ViaTranslator {
             }
             try {
                 MappingPatcher.patch(descriptor, NewContent.clientIds(), ViewerConfig.get().toggles());
-                NewEntities.captureCushionColors();
+                NewEntities.captureLostData();
             } catch (final ReflectiveOperationException e) {
                 throw new IllegalStateException(e);
             }

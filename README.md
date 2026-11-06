@@ -40,11 +40,13 @@ Los traductores de protocolo como ViaVersion/ViaBackwards dejan entrar con un cl
 * **🪧 Bloques que funcionan:** los carteles de álamo muestran su texto, la estantería enseña sus objetos y en la cama de paja se duerme con la postura correcta.
 * **✨ Partículas y géiseres:** hojas de álamo que caen, y géiseres con burbujas, gas y erupciones que te lanzan hacia arriba, como en 26.3.
 * **⛵ Barcos de álamo y cojines** con su aspecto real.
+* **🟨 Sulfur cube:** con su capa transparente, su núcleo, su tamaño de cría y el bloque que lleva tragado dentro. Se hincha y parpadea al encenderse, y suelta sus pegotes al botar.
+* **🐣 Crías de 26.x:** unas 40 crías de animales y monstruos (vaca, cerdo, lobo, gato, aldeano, zombi…) con sus modelos y texturas nuevos.
 * **🛡️ No toca nada más:** en servidores de tu misma versión el juego es exactamente vanilla.
 
 ### 📦 Contenido de 26.3 incluido
 
-**120 bloques** (5.852 estados), **153 items**, **153 sonidos**, **10 partículas** y 3 entidades (barco de álamo, barco de álamo con cofre y cojín). Entre ellos: todo el juego de madera de álamo, los bloques de construcción de cinabrio y azufre, losas y escaleras de lana y hormigón de todos los colores, el diente de león dorado, el arbusto rojo, el políporo, la cama de paja, los cojines y los nuevos mapas de exploración.
+**120 bloques** (5.852 estados), **153 items**, **153 sonidos**, **13 partículas**, 4 entidades (barco de álamo, barco de álamo con cofre, cojín y sulfur cube) y unas 40 crías. Entre ellos: todo el juego de madera de álamo, los bloques de construcción de cinabrio y azufre, losas y escaleras de lana y hormigón de todos los colores, el diente de león dorado, el arbusto rojo, el políporo, la cama de paja, los cojines y los nuevos mapas de exploración.
 
 ---
 
@@ -63,7 +65,7 @@ Con [Mod Menu](https://modrinth.com/mod/modmenu) instalado tienes una pantalla d
 | Opción | Qué hace |
 | :--- | :--- |
 | **Entrar en servidores más nuevos** | Activa o desactiva la traducción. Desactivada, el juego es vanilla. |
-| **Bloques / items / sonidos / partículas / entidades nuevos** | Muestra cada tipo de contenido nuevo, o lo cambia por su parecido antiguo. |
+| **Bloques / items / sonidos / partículas / entidades / crías nuevos** | Muestra cada tipo de contenido nuevo, o lo cambia por su parecido antiguo. |
 | **Volver a bajar los assets** | Borra la cache y la vuelve a bajar de Mojang. |
 
 La configuración se guarda en `config/fnviaviewer.json`.
@@ -82,11 +84,12 @@ La configuración se guarda en `config/fnviaviewer.json`.
 
 ---
 
-## ⚠️ Limitaciones conocidas (0.2.0)
+## ⚠️ Limitaciones conocidas (0.3.0)
 
-* **Los mobs nuevos** (el sulfur cube) siguen saliendo como su sustituto antiguo. Llegan en la 0.3.0.
+* Las crías usan la geometría y las texturas de 26.x, pero la **animación** es la de 1.21.11: en las que cambiaron de partes (lobo, abeja, conejo, burro, ajolote, gallina, strider, hoglin, piglin, tortuga) algunas partes no se mueven igual que en 26.x.
+* La armadura de las crías zombi sigue con su forma antigua.
 * Los efectos del géiser (burbujas, gas, erupción y empuje) están **reprogramados** para parecerse a los de 26.3: pueden no ser idénticos.
-* Barcos de álamo y cojines solo cambian de aspecto: en la red y en la física siguen siendo su sustituto (barco de abedul y bloque que cae).
+* Barcos de álamo, cojines y sulfur cubes solo cambian de aspecto: en la red y en la física siguen siendo su sustituto (barco de abedul, bloque que cae y slime). El empuje y el rebote del sulfur cube los calcula el servidor, así que se ven como en 26.3.
 * Por ahora solo **1.21.11 → 26.3**. Está previsto añadir más versiones, tanto más nuevas como más antiguas.
 
 ---

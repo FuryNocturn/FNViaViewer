@@ -21,8 +21,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-# Lo de mobs va en otra version: ViaBackwards sigue poniendo su sustituto
-EXCLUDED = {"particles": {"minecraft:sulfur_cube_goo", "minecraft:pause_mob_growth", "minecraft:reset_mob_growth"}}
+# Nombres que no se registran (ViaBackwards sigue poniendo su sustituto)
+EXCLUDED = {}
 OUT = ROOT.parent / "src" / "main" / "resources" / "fnviaviewer" / "content"
 
 

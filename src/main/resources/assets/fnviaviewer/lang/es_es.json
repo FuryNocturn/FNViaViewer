@@ -17,7 +17,9 @@
   "fnviaviewer.config.particles": "Partículas nuevas",
   "fnviaviewer.config.particles.tooltip": "Muestra las partículas de la versión nueva (hojas de álamo, géiseres). Desactivado, salen las antiguas más parecidas.",
   "fnviaviewer.config.entities": "Entidades nuevas",
-  "fnviaviewer.config.entities.tooltip": "Muestra los barcos de álamo y los cojines con su aspecto real. Desactivado, se ven como los antiguos más parecidos.",
+  "fnviaviewer.config.entities.tooltip": "Muestra los barcos de álamo, los cojines y los sulfur cubes con su aspecto real. Desactivado, se ven como los antiguos más parecidos.",
+  "fnviaviewer.config.babies": "Crías nuevas",
+  "fnviaviewer.config.babies.tooltip": "Muestra las crías de los animales y monstruos con su aspecto de 26.x. Desactivado, se ven como el adulto en pequeño.",
   "fnviaviewer.config.redownload": "Volver a bajar los assets",
   "fnviaviewer.config.redownload.tooltip": "Borra las texturas, modelos y sonidos bajados y los vuelve a bajar de Mojang.",
   "fnviaviewer.config.rejoin": "Los cambios se aplican del todo al volver a entrar al servidor."

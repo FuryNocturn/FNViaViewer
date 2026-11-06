@@ -40,11 +40,13 @@ Protocol translators like ViaVersion/ViaBackwards let an older client join a new
 * **🪧 Blocks that work:** poplar signs show their text, the shelf shows its items, and you sleep in the straw bed in the right pose.
 * **✨ Particles and geysers:** falling poplar leaves, and geysers with bubbles, gas and eruptions that push you up, like in 26.3.
 * **⛵ Poplar boats and cushions** as they really look.
+* **🟨 Sulfur cube:** with its see-through shell, its core, its baby size and the block it has swallowed shown inside. It swells and flashes when primed, and drops goo when it bounces.
+* **🐣 26.x babies:** around 40 baby animals and monsters (cow, pig, wolf, cat, villager, zombie…) with their new models and textures.
 * **🛡️ Leaves everything else alone:** on servers running your own version, the game is exactly vanilla.
 
 ### 📦 26.3 content included
 
-**120 blocks** (5,852 states), **153 items**, **153 sounds**, **10 particles** and 3 entities (poplar boat, poplar chest boat and cushion). Among them: the full poplar wood set, cinnabar and sulfur building blocks, wool and concrete slabs and stairs in every color, the golden dandelion, red shrub, shelf mushroom, straw bed, cushions and the new explorer maps.
+**120 blocks** (5,852 states), **153 items**, **153 sounds**, **13 particles**, 4 entities (poplar boat, poplar chest boat, cushion and sulfur cube) and around 40 babies. Among them: the full poplar wood set, cinnabar and sulfur building blocks, wool and concrete slabs and stairs in every color, the golden dandelion, red shrub, shelf mushroom, straw bed, cushions and the new explorer maps.
 
 ---
 
@@ -63,7 +65,7 @@ With [Mod Menu](https://modrinth.com/mod/modmenu) installed, you get a settings 
 | Option | What it does |
 | :--- | :--- |
 | **Join newer servers** | Turns translation on or off. When off, the game is vanilla. |
-| **New blocks / items / sounds / particles / entities** | Show each kind of new content, or fall back to the older look-alike. |
+| **New blocks / items / sounds / particles / entities / babies** | Show each kind of new content, or fall back to the older look-alike. |
 | **Download assets again** | Clears the cache and downloads it again from Mojang. |
 
 Settings are saved in `config/fnviaviewer.json`.
@@ -82,11 +84,12 @@ Settings are saved in `config/fnviaviewer.json`.
 
 ---
 
-## ⚠️ Known limitations (0.2.0)
+## ⚠️ Known limitations (0.3.0)
 
-* **New mobs** (the sulfur cube) still show as their older replacement. They're coming in 0.3.0.
+* Babies use the 26.x geometry and textures, but the **animation** is 1.21.11's: for the ones whose parts changed (wolf, bee, rabbit, donkey, axolotl, chicken, strider, hoglin, piglin, turtle) some parts don't move exactly like in 26.x.
+* Baby zombie armor keeps its old shape.
 * Geyser effects (bubbles, gas, eruptions and the upward push) are **re-implemented** to look like 26.3's: they may not be identical.
-* Poplar boats and cushions only change their look: on the network and for physics they're still their replacement (birch boat and falling block).
+* Poplar boats, cushions and sulfur cubes only change their look: on the network and for physics they're still their replacement (birch boat, falling block and slime). The sulfur cube's push and bounce are computed by the server, so they look like in 26.3.
 * Only **1.21.11 → 26.3** for now. More versions, both newer and older, are planned.
 
 ---

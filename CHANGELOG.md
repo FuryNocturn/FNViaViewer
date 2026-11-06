@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 (beta)
+
+- The sulfur cube is drawn as it really looks: see-through shell, core, baby size and the swallowed block inside. It swells and flashes when primed, like TNT, and drops its goo particles when it bounces. Its push and bounce come from the server, so they already match 26.3.
+- Around 40 baby mobs use their 26.x models and textures. Their animation is still 1.21.11's, so some parts may move differently.
+- New particles from the golden dandelion on babies (pause and reset growth).
+- New setting: "New babies". The sulfur cube goes with "New entities".
+- Babies only change on servers translated by Via; on servers running your own version they stay vanilla.
+
 ## 0.2.0 (beta)
 
 - Poplar signs and hanging signs show their text. The 26.3 sign model is used, and only the text is drawn on top.

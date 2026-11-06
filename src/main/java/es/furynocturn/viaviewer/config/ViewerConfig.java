@@ -11,7 +11,7 @@ import java.nio.file.Path;
 import net.fabricmc.loader.api.FabricLoader;
 
 /**
- * config/fnviaviewer.json. enabled apaga la traduccion entera (cliente vanilla); blocks/items/sounds/particles/entities
+ * config/fnviaviewer.json. enabled apaga la traduccion entera (cliente vanilla); blocks/items/sounds/particles/entities/babies
  * solo deciden si ese contenido nuevo llega o sale como su sustituto, y se pueden cambiar en marcha.
  */
 public final class ViewerConfig {
@@ -26,6 +26,7 @@ public final class ViewerConfig {
     public volatile boolean sounds = true;
     public volatile boolean particles = true;
     public volatile boolean entities = true;
+    public volatile boolean babies = true;
 
     public static synchronized ViewerConfig get() {
         if (instance == null) {

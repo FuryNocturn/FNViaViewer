@@ -17,7 +17,9 @@
   "fnviaviewer.config.particles": "New particles",
   "fnviaviewer.config.particles.tooltip": "Shows the new version's particles (poplar leaves, geysers). Off: the closest old ones are used.",
   "fnviaviewer.config.entities": "New entities",
-  "fnviaviewer.config.entities.tooltip": "Shows poplar boats and cushions as they really look. Off: they look like the closest old ones.",
+  "fnviaviewer.config.entities.tooltip": "Shows poplar boats, cushions and sulfur cubes as they really look. Off: they look like the closest old ones.",
+  "fnviaviewer.config.babies": "New babies",
+  "fnviaviewer.config.babies.tooltip": "Shows baby animals and monsters with their 26.x look. Off: they look like a small adult.",
   "fnviaviewer.config.redownload": "Download assets again",
   "fnviaviewer.config.redownload.tooltip": "Deletes the downloaded textures, models and sounds and downloads them again from Mojang.",
   "fnviaviewer.config.rejoin": "Changes apply fully after rejoining the server."

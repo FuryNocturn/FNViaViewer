@@ -5,6 +5,7 @@ import es.furynocturn.viaviewer.content.PotentSulfurBlockEntity;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.BaseAshSmokeParticle;
+import net.minecraft.client.particle.BreakingItemParticle;
 import net.minecraft.client.particle.FallingLeavesParticle;
 import net.minecraft.client.particle.NoRenderParticle;
 import net.minecraft.client.particle.SingleQuadParticle;
@@ -46,6 +47,39 @@ public final class NewParticleProviders {
             registry.register(NewParticles.geyserBase(id), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
                 new GeyserBase(level, x + (random.nextFloat() - 0.5F) * 0.5F, y + (random.nextFloat() - 0.5F) * 0.5F + 0.2F,
                     z + (random.nextFloat() - 0.5F) * 0.5F, xa, ya, za, options.waterBlocks(), options.burstImpulseBase(), sprites));
+        }
+        registry.register(NewParticles.simple("minecraft:sulfur_cube_goo"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
+            new SulfurCubeGoo(level, x, y, z, sprites.first()));
+        // Diente de leon dorado sobre una cria: pausar el crecimiento baja, reiniciarlo sube
+        registry.register(NewParticles.simple("minecraft:pause_mob_growth"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
+            new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), false));
+        registry.register(NewParticles.simple("minecraft:reset_mob_growth"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
+            new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), true));
+    }
+
+    /** Pegote del sulfur cube al botar: el mismo trozo que salta del slime, con su sprite. */
+    static final class SulfurCubeGoo extends BreakingItemParticle {
+        SulfurCubeGoo(final ClientLevel level, final double x, final double y, final double z, final TextureAtlasSprite sprite) {
+            super(level, x, y, z, sprite);
+        }
+    }
+
+    /** Destello que va recto hacia arriba o hacia abajo, sin gravedad, durante 8 ticks. */
+    static final class MobGrowth extends SingleQuadParticle {
+        MobGrowth(final ClientLevel level, final double x, final double y, final double z, final double xa, final double ya, final double za,
+                  final TextureAtlasSprite sprite, final boolean upwards) {
+            super(level, x, y, z, xa, ya, za, sprite);
+            this.xd = xa;
+            this.yd = ya + (upwards ? 0.03 : -0.03);
+            this.zd = za;
+            this.gravity = 0.0F;
+            this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
+            this.lifetime = 8;
+        }
+
+        @Override
+        protected Layer getLayer() {
+            return Layer.OPAQUE;
         }
     }
 

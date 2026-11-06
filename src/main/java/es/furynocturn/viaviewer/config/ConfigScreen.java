@@ -40,6 +40,7 @@ public final class ConfigScreen extends Screen {
         this.toggle(right, y, "particles", config.particles, value -> config.particles = value);
         y += 24;
         this.toggle(left, y, "entities", config.entities, value -> config.entities = value);
+        this.toggle(right, y, "babies", config.babies, value -> config.babies = value);
         y += 32;
         this.addRenderableWidget(Button.builder(Component.translatable("fnviaviewer.config.redownload"), button -> {
                 button.active = false;

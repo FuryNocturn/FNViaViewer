@@ -7,6 +7,8 @@
     "BlockBehaviourAccessor"
   ],
   "client": [
+    "EntityRendererContextAccessor",
+    "EntityRenderersAccessor",
     "MixinAbstractSignRenderer",
     "MixinConnectScreen_1",
     "MixinConnection",
@@ -14,8 +16,12 @@
     "MixinEntityRenderDispatcher",
     "MixinEntityRenderers",
     "MixinIrisWorldRenderingSettings",
+    "MixinLivingEntityRenderer",
     "MixinPackRepository",
-    "MixinSheets"
+    "MixinRenderTypes",
+    "MixinSheets",
+    "MixinSlime",
+    "ModelPartAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
