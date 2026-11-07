@@ -1199,21 +1199,25 @@ final class Layers263 {
           return LayerDefinition.create(mesh, 64, 64);
        }
 
+       //#if MC >= 12109
        public static LayerDefinition createNoHatLayer() {
           return createBodyLayer().apply(mesh -> {
              mesh.getRoot().clearChild("head").clearRecursively();
              return mesh;
           });
        }
+       //#endif
     }
 
     /** BabyVillagerModel de 26.3. */
     static final class BabyVillagerModel {
+       //#if MC >= 12109
        public static MeshDefinition createNoHatModel() {
           MeshDefinition mesh = createBodyModel();
           mesh.getRoot().clearChild("head").clearRecursively();
           return mesh;
        }
+       //#endif
 
        public static MeshDefinition createBodyModel() {
           MeshDefinition mesh = new MeshDefinition();

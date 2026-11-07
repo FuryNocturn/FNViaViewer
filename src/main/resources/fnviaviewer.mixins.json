@@ -20,8 +20,8 @@
     "MixinPackRepository",
     "MixinRenderTypes",
     "MixinSheets",
-    "MixinSlime",
-    "ModelPartAccessor"
+    "ModelPartAccessor",
+    "MixinSlime"
   ],
   "injectors": {
     "defaultRequire": 1

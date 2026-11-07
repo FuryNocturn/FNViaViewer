@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0
+
+- More client versions. Besides 1.21.11, there are now builds for **26.2, 26.1.x (26.1–26.1.2), 1.21.9–1.21.10 and 1.21.7–1.21.8**, all joining 26.3 servers. Use the jar that matches your game version. Each one only adds what that version is missing up to 26.3.
+- One universal jar (`fnviaviewer-0.4.0-universal.jar`) with all five inside: Fabric loads only the one for your game version. Via is included once, so it is about the same size as a single jar.
+- Versions not yet tested in game are released as alpha; see the release notes for which ones.
+- Mobs that older clients don't have are drawn with their real shape instead of ViaBackwards' look-alike:
+  - 1.21.10 and 1.21.8: nautilus (and its baby), zombie nautilus (normal and coral), camel husk and parched;
+  - 1.21.8: copper golem, with its oxidation stage and glowing eyes.
+- Their shapes and animations come from Mojang's official Bedrock samples (`bedrock-samples`), downloaded on first launch like the other assets and checked against their SHA-1. Nothing from Mojang is bundled in the mod.
+- 26.3 models and item definitions are converted for older clients: tilted cubes beyond 45° (signs, hanging sign chains), the "on shelf" display context and new armor trim colors.
+- 1.21.8: shelves are shown as plain blocks (no items on top), and copper chests and copper golem statues keep ViaBackwards' look-alike (a chest...), because that version has no renderer for them.
+- 26.1 and newer already have the new babies, and 26.2 and newer the sulfur cube and the new signs: those features are only added where they are missing.
+- For maintainers: one multi-version build (Essential's preprocessor, like EMF/ETF) with a folder per client version in `versions/`, and a content descriptor per client in `content/`.
+
 ## 0.3.0 (beta)
 
 - The sulfur cube is drawn as it really looks: see-through shell, core, baby size and the swallowed block inside. It swells and flashes when primed, like TNT, and drops its goo particles when it bounces. Its push and bounce come from the server, so they already match 26.3.

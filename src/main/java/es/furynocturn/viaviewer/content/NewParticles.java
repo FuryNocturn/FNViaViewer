@@ -81,6 +81,11 @@ public final class NewParticles {
         return type;
     }
 
+    /** Si la particula es nueva para este cliente (las que ya trae de serie no estan en el descriptor). */
+    public static boolean has(final String id) {
+        return BY_ID.containsKey(id);
+    }
+
     public static SimpleParticleType simple(final String id) {
         return (SimpleParticleType) get(id);
     }

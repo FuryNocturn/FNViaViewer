@@ -5,13 +5,19 @@ import es.furynocturn.viaviewer.content.PotentSulfurBlockEntity;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.BaseAshSmokeParticle;
+//#if MC >= 12109
 import net.minecraft.client.particle.BreakingItemParticle;
+//#else
+//$$ import net.minecraft.client.particle.ParticleRenderType;
+//#endif
 import net.minecraft.client.particle.FallingLeavesParticle;
 import net.minecraft.client.particle.NoRenderParticle;
-import net.minecraft.client.particle.SingleQuadParticle;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.material.Fluids;
@@ -26,46 +32,124 @@ public final class NewParticleProviders {
     private NewParticleProviders() {
     }
 
+    /** Como se crea una particula, con el RandomSource que ParticleProvider recibe desde 1.21.9. */
+    @FunctionalInterface
+    interface Factory<T extends ParticleOptions> {
+        Particle create(T options, ClientLevel level, double x, double y, double z, double xa, double ya, double za, RandomSource random);
+    }
+
+    private static <T extends ParticleOptions> ParticleProvider<T> provider(final Factory<T> factory) {
+        //#if MC >= 12109
+        return factory::create;
+        //#else
+        //$$ return (options, level, x, y, z, xa, ya, za) -> factory.create(options, level, x, y, z, xa, ya, za, level.random);
+        //#endif
+    }
+
+    /** El primer sprite del conjunto (SpriteSet.first llego en 1.21.9). */
+    static TextureAtlasSprite first(final SpriteSet sprites) {
+        //#if MC >= 12109
+        return sprites.first();
+        //#else
+        //$$ return sprites.get(0, 1);
+        //#endif
+    }
+
+    /** Solo las particulas que son nuevas para este cliente: las demas ya las trae de serie. */
     public static void register() {
         final ParticleFactoryRegistry registry = ParticleFactoryRegistry.getInstance();
         // Las hojas de alamo caen igual que las del roble palido
         for (final String color : new String[]{"red", "orange", "yellow"}) {
-            registry.register(NewParticles.simple("minecraft:" + color + "_poplar_leaves"), FallingLeavesParticle.PaleOakProvider::new);
+            if (NewParticles.has("minecraft:" + color + "_poplar_leaves")) {
+                registry.register(NewParticles.simple("minecraft:" + color + "_poplar_leaves"), FallingLeavesParticle.PaleOakProvider::new);
+            }
         }
-        registry.register(NewParticles.simple("minecraft:sulfur_bubbles"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new SulfurBubble(level, x, y, z, xa, za, sprites.get(random)));
-        registry.register(NewParticles.simple("minecraft:noxious_gas"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new NoxiousGas(level, x, y, z, xa, ya, za, sprites));
-        registry.register(NewParticles.simple("minecraft:noxious_gas_cloud"), (options, level, x, y, z, xa, ya, za, random) ->
-            new NoxiousGasCloud(level, x, y, z));
-        registry.register(NewParticles.geyser("minecraft:geyser"), (options, level, x, y, z, xa, ya, za, random) ->
-            new GeyserEruption(level, x, y, z, xa, ya, za, options.waterBlocks()));
-        registry.register(NewParticles.geyser("minecraft:geyser_plume"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new GeyserPlume(level, x + (random.nextFloat() - 0.5F) * 0.2F, y + random.nextFloat(), z + (random.nextFloat() - 0.5F) * 0.2F,
-                xa, ya, za, options.waterBlocks(), sprites));
+        if (NewParticles.has("minecraft:sulfur_bubbles")) {
+            registry.register(NewParticles.simple("minecraft:sulfur_bubbles"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new SulfurBubble(level, x, y, z, xa, za, sprites.get(random))));
+        }
+        if (NewParticles.has("minecraft:noxious_gas")) {
+            registry.register(NewParticles.simple("minecraft:noxious_gas"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new NoxiousGas(level, x, y, z, xa, ya, za, sprites)));
+        }
+        if (NewParticles.has("minecraft:noxious_gas_cloud")) {
+            registry.register(NewParticles.simple("minecraft:noxious_gas_cloud"), provider((options, level, x, y, z, xa, ya, za, random) ->
+                new NoxiousGasCloud(level, x, y, z)));
+        }
+        if (NewParticles.has("minecraft:geyser")) {
+            registry.register(NewParticles.geyser("minecraft:geyser"), provider((options, level, x, y, z, xa, ya, za, random) ->
+                new GeyserEruption(level, x, y, z, xa, ya, za, options.waterBlocks())));
+        }
+        if (NewParticles.has("minecraft:geyser_plume")) {
+            registry.register(NewParticles.geyser("minecraft:geyser_plume"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new GeyserPlume(level, x + (random.nextFloat() - 0.5F) * 0.2F, y + random.nextFloat(), z + (random.nextFloat() - 0.5F) * 0.2F,
+                    xa, ya, za, options.waterBlocks(), sprites)));
+        }
         for (final String id : new String[]{"minecraft:geyser_base", "minecraft:geyser_poof"}) {
-            registry.register(NewParticles.geyserBase(id), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-                new GeyserBase(level, x + (random.nextFloat() - 0.5F) * 0.5F, y + (random.nextFloat() - 0.5F) * 0.5F + 0.2F,
-                    z + (random.nextFloat() - 0.5F) * 0.5F, xa, ya, za, options.waterBlocks(), options.burstImpulseBase(), sprites));
+            if (NewParticles.has(id)) {
+                registry.register(NewParticles.geyserBase(id), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                    new GeyserBase(level, x + (random.nextFloat() - 0.5F) * 0.5F, y + (random.nextFloat() - 0.5F) * 0.5F + 0.2F,
+                        z + (random.nextFloat() - 0.5F) * 0.5F, xa, ya, za, options.waterBlocks(), options.burstImpulseBase(), sprites)));
+            }
         }
-        registry.register(NewParticles.simple("minecraft:sulfur_cube_goo"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new SulfurCubeGoo(level, x, y, z, sprites.first()));
+        if (NewParticles.has("minecraft:sulfur_cube_goo")) {
+            registry.register(NewParticles.simple("minecraft:sulfur_cube_goo"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new SulfurCubeGoo(level, x, y, z, first(sprites))));
+        }
         // Diente de leon dorado sobre una cria: pausar el crecimiento baja, reiniciarlo sube
-        registry.register(NewParticles.simple("minecraft:pause_mob_growth"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), false));
-        registry.register(NewParticles.simple("minecraft:reset_mob_growth"), sprites -> (options, level, x, y, z, xa, ya, za, random) ->
-            new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), true));
+        if (NewParticles.has("minecraft:pause_mob_growth")) {
+            registry.register(NewParticles.simple("minecraft:pause_mob_growth"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), false)));
+        }
+        if (NewParticles.has("minecraft:reset_mob_growth")) {
+            registry.register(NewParticles.simple("minecraft:reset_mob_growth"), sprites -> provider((options, level, x, y, z, xa, ya, za, random) ->
+                new MobGrowth(level, x, y, z, xa, ya, za, sprites.get(random), true)));
+        }
     }
 
     /** Pegote del sulfur cube al botar: el mismo trozo que salta del slime, con su sprite. */
+    //#if MC >= 12109
     static final class SulfurCubeGoo extends BreakingItemParticle {
         SulfurCubeGoo(final ClientLevel level, final double x, final double y, final double z, final TextureAtlasSprite sprite) {
             super(level, x, y, z, sprite);
         }
     }
+    //#else
+    //$$ /** Antes de 1.21.9 BreakingItemParticle solo sale de un item: lo mismo con el sprite (un trozo al azar, gravedad 1). */
+    //$$ static final class SulfurCubeGoo extends QuadParticle {
+    //$$     private final float uo = this.random.nextFloat() * 3.0F;
+    //$$     private final float vo = this.random.nextFloat() * 3.0F;
+    //$$
+    //$$     SulfurCubeGoo(final ClientLevel level, final double x, final double y, final double z, final TextureAtlasSprite sprite) {
+    //$$         super(level, x, y, z, 0.0, 0.0, 0.0, sprite);
+    //$$         this.gravity = 1.0F;
+    //$$         this.quadSize /= 2.0F;
+    //$$     }
+    //$$
+    //$$     @Override
+    //$$     protected float getU0() {
+    //$$         return this.sprite.getU((this.uo + 1.0F) / 4.0F);
+    //$$     }
+    //$$
+    //$$     @Override
+    //$$     protected float getU1() {
+    //$$         return this.sprite.getU(this.uo / 4.0F);
+    //$$     }
+    //$$
+    //$$     @Override
+    //$$     protected float getV0() {
+    //$$         return this.sprite.getV(this.vo / 4.0F);
+    //$$     }
+    //$$
+    //$$     @Override
+    //$$     protected float getV1() {
+    //$$         return this.sprite.getV((this.vo + 1.0F) / 4.0F);
+    //$$     }
+    //$$ }
+    //#endif
 
     /** Destello que va recto hacia arriba o hacia abajo, sin gravedad, durante 8 ticks. */
-    static final class MobGrowth extends SingleQuadParticle {
+    static final class MobGrowth extends QuadParticle {
         MobGrowth(final ClientLevel level, final double x, final double y, final double z, final double xa, final double ya, final double za,
                   final TextureAtlasSprite sprite, final boolean upwards) {
             super(level, x, y, z, xa, ya, za, sprite);
@@ -76,15 +160,10 @@ public final class NewParticleProviders {
             this.quadSize *= this.random.nextFloat() * 0.6F + 0.5F;
             this.lifetime = 8;
         }
-
-        @Override
-        protected Layer getLayer() {
-            return Layer.OPAQUE;
-        }
     }
 
     /** Burbuja que sube por el agua sobre el azufre y crece; desaparece al salir del agua o al pararse. */
-    static final class SulfurBubble extends SingleQuadParticle {
+    static final class SulfurBubble extends QuadParticle {
         private final double yStart;
         private final double yEnd;
         private final float sizeStart;
@@ -124,11 +203,6 @@ public final class NewParticleProviders {
         private double wiggle() {
             return this.random.nextFloat() * 0.0015 * (this.random.nextBoolean() ? 1 : -1);
         }
-
-        @Override
-        protected Layer getLayer() {
-            return Layer.OPAQUE;
-        }
     }
 
     /** Humo amarillento que se queda flotando sobre el agua y se desvanece en la segunda mitad de su vida. */
@@ -153,10 +227,17 @@ public final class NewParticleProviders {
             }
         }
 
+        //#if MC >= 12109
         @Override
         public Layer getLayer() {
             return Layer.TRANSLUCENT;
         }
+        //#else
+        //$$ @Override
+        //$$ public ParticleRenderType getRenderType() {
+        //$$     return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
+        //$$ }
+        //#endif
     }
 
     /** Invisible: durante un segundo suelta gas alrededor del geiser, solo donde el gas llega. */
@@ -240,7 +321,7 @@ public final class NewParticleProviders {
     }
 
     /** Parte de la columna de agua: sale disparada, frena al acercarse a su altura y se abre en abanico. */
-    static final class GeyserPlume extends SingleQuadParticle {
+    static final class GeyserPlume extends QuadParticle {
         private final SpriteSet sprites;
         private final double startY;
         private final double maxY;
@@ -253,7 +334,7 @@ public final class NewParticleProviders {
 
         GeyserPlume(final ClientLevel level, final double x, final double y, final double z, final double xa, final double ya, final double za,
                     final int waterBlocks, final SpriteSet sprites) {
-            super(level, x, y, z, xa, ya, za, sprites.first());
+            super(level, x, y, z, xa, ya, za, first(sprites));
             final int height = 5 * Math.max(1, waterBlocks);
             this.hasPhysics = true;
             this.speedUpWhenYMotionIsBlocked = true;
@@ -289,11 +370,6 @@ public final class NewParticleProviders {
             this.zd = progress * this.sprayZ;
             this.setSpriteFromAge(this.sprites);
             this.quadSize = this.minSize + (float) (progress * (this.maxSize - this.minSize));
-        }
-
-        @Override
-        protected Layer getLayer() {
-            return Layer.OPAQUE;
         }
     }
 }

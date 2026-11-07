@@ -1,5 +1,6 @@
 """
-Genera el descriptor de contenido nuevo (src/main/resources/fnviaviewer/content/<version>.json)
+Genera el descriptor de contenido nuevo (content/<cliente>/<version>.json; el build lo mete en el
+jar de ese cliente como fnviaviewer/content/<version>.json)
 a partir de los reports del generador de datos oficial de cada servidor vanilla.
 
 Uso (desde FNViaViewer/tools):
@@ -21,9 +22,20 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-# Nombres que no se registran (ViaBackwards sigue poniendo su sustituto)
-EXCLUDED = {}
-OUT = ROOT.parent / "src" / "main" / "resources" / "fnviaviewer" / "content"
+# Nombres que no se registran (ViaBackwards sigue poniendo su sustituto). Solo cuentan en los clientes
+# que no los tienen: a partir de su version son vanilla y no salen en el descriptor.
+# - Cofres de cobre y estatuas del golem de cobre (1.21.9): los dibuja solo su entidad de bloque (el
+#   modelo de 26.3 es de particulas) y aqui no hay renderer para ellas; el sustituto (cofre...) se ve.
+_COPPER = ["", "exposed_", "weathered_", "oxidized_", "waxed_", "waxed_exposed_", "waxed_weathered_", "waxed_oxidized_"]
+_BLOCK_ENTITY_ONLY = [f"minecraft:{c}{b}" for c in _COPPER for b in ("copper_chest", "copper_golem_statue")]
+EXCLUDED = {
+    "blocks": set(_BLOCK_ENTITY_ONLY),
+    "block_ids": set(_BLOCK_ENTITY_ONLY),
+    "items": set(_BLOCK_ENTITY_ONLY),
+    # La estanteria (1.21.9) sin su entidad de bloque: modelo fijo, sin los objetos de encima
+    "block_entities": {"minecraft:shelf", "minecraft:copper_golem_statue"},
+}
+OUT_ROOT = ROOT.parent / "content"
 
 
 def load(version):
@@ -52,7 +64,7 @@ def main(chain):
 
     # Bloques nuevos (indice D por estado) en orden de ID de la version nueva
     new_blocks = sorted(
-        (name for name in newest["blocks"] if name not in native["blocks"]),
+        (name for name in newest["blocks"] if name not in native["blocks"] and name not in EXCLUDED["blocks"]),
         key=lambda name: newest["blocks"][name]["states"][0]["id"],
     )
     block_index = {}
@@ -99,7 +111,7 @@ def main(chain):
         src, dst = data[source], data[target]
         ranges = []
         for name, block in src["blocks"].items():
-            if name in dst["blocks"]:
+            if name in dst["blocks"] or name in EXCLUDED["blocks"]:
                 continue
             for state in block["states"]:
                 key = state_key(name, state)
@@ -144,6 +156,7 @@ def main(chain):
         "block_entities": [{"id": name, "nid": newest["block_entities"][name]} for name in block_entities_out],
         "steps": steps,
     }
+    OUT = OUT_ROOT / chain[-1]
     OUT.mkdir(parents=True, exist_ok=True)
     path = OUT / f"{chain[0]}.json"
     with open(path, "w", encoding="utf-8", newline="\n") as f:

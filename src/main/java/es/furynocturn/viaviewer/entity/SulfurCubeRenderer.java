@@ -10,7 +10,17 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
+//#if MC >= 12109
 import net.minecraft.client.renderer.SubmitNodeCollector;
+//#else
+//$$ import net.minecraft.client.Minecraft;
+//$$ import net.minecraft.client.renderer.MultiBufferSource;
+//#endif
+//#if MC >= 260100
+//$$ import net.minecraft.client.renderer.block.BlockModelRenderState;
+//$$ import net.minecraft.client.renderer.block.BlockModelResolver;
+//$$ import net.minecraft.client.renderer.block.model.BlockDisplayContext;
+//#endif
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
@@ -19,7 +29,9 @@ import net.minecraft.client.renderer.entity.layers.CustomHeadLayer;
 import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.entity.state.SlimeRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
+//#if MC >= 12109
 import net.minecraft.client.renderer.state.CameraRenderState;
+//#endif
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
@@ -53,14 +65,26 @@ final class SulfurCubeRenderer extends MobRenderer<Slime, SulfurCubeRenderer.Sta
 
     private final CubeModel normalModel;
     private final CubeModel smallModel;
+    //#if MC >= 260100
+    //$$ private final BlockModelResolver blockModels;
+    //#endif
 
     SulfurCubeRenderer(final EntityRendererProvider.Context context) {
         super(context, new CubeModel(context.bakeLayer(OUTER)), 0.25F);
         this.normalModel = this.model;
         this.smallModel = new CubeModel(context.bakeLayer(SMALL_OUTER));
+        //#if MC >= 260100
+        //$$ this.blockModels = context.getBlockModelResolver();
+        //#endif
         this.addLayer(new InnerLayer(this, new CubeModel(context.bakeLayer(INNER)), new CubeModel(context.bakeLayer(SMALL_INNER))));
+        //#if MC >= 12109
         this.addLayer(new CustomHeadLayer<>(this, context.getModelSet(), context.getPlayerSkinRenderCache(),
             new CustomHeadLayer.Transforms(0.0F, 0.625F, 0.84210527F)));
+        //#else
+        //$$ this.addLayer(new CustomHeadLayer<>(this, context.getModelSet(), new CustomHeadLayer.Transforms(0.0F, 0.625F, 0.84210527F)));
+        //$$ // Antes de 1.21.9 se dibuja en el orden en que llega: el cubo translucido, el ultimo, o taparia lo de dentro
+        //$$ this.addLayer(new OuterLayer(this));
+        //#endif
     }
 
     private static ModelLayerLocation layer(final String name) {
@@ -101,16 +125,38 @@ final class SulfurCubeRenderer extends MobRenderer<Slime, SulfurCubeRenderer.Sta
                     .apply(Block.byItem(blockItem).defaultBlockState());
             }
         }
+        //#if MC >= 260100
+        //$$ // Desde 26.1 el bloque se prepara aqui y se dibuja desde su estado, como la TNT
+        //$$ if (state.containedBlock != null) {
+        //$$     this.blockModels.update(state.block, state.containedBlock, BlockDisplayContext.create());
+        //$$ } else {
+        //$$     state.block.clear();
+        //$$ }
+        //#endif
         if (NewEntities.hasReplacementName(entity, "sulfur_cube")) {
             state.nameTag = null;
         }
     }
 
+    //#if MC >= 12109
     @Override
     public void submit(final State state, final PoseStack poseStack, final SubmitNodeCollector collector, final CameraRenderState camera) {
         this.model = state.isBaby ? this.smallModel : this.normalModel;
         super.submit(state, poseStack, collector, camera);
     }
+    //#else
+    //$$ @Override
+    //$$ public void render(final State state, final PoseStack poseStack, final MultiBufferSource buffers, final int light) {
+    //$$     this.model = state.isBaby ? this.smallModel : this.normalModel;
+    //$$     super.render(state, poseStack, buffers, light);
+    //$$ }
+    //$$
+    //$$ /** El modelo principal no se dibuja aqui: lo hace OuterLayer, despues del nucleo y de la cabeza. */
+    //$$ @Override
+    //$$ protected RenderType getRenderType(final State state, final boolean bodyVisible, final boolean translucent, final boolean glowing) {
+    //$$     return null;
+    //$$ }
+    //#endif
 
     @Override
     protected float getShadowRadius(final State state) {
@@ -157,6 +203,9 @@ final class SulfurCubeRenderer extends MobRenderer<Slime, SulfurCubeRenderer.Sta
         private final SulfurCubeRenderer renderer;
         float fuse = -1.0F;
         @Nullable BlockState containedBlock;
+        //#if MC >= 260100
+        //$$ final BlockModelRenderState block = new BlockModelRenderState();
+        //#endif
 
         State(final SulfurCubeRenderer renderer) {
             this.renderer = renderer;
@@ -190,15 +239,14 @@ final class SulfurCubeRenderer extends MobRenderer<Slime, SulfurCubeRenderer.Sta
             this.smallModel = smallModel;
         }
 
+        //#if MC >= 12109
         @Override
         public void submit(final PoseStack poseStack, final SubmitNodeCollector collector, final int light, final State state,
                            final float yRot, final float xRot) {
             if (state.wornHeadType != null) {
                 return;
             }
-            final int overlay = state.fuse > 0.0F && lit(state.fuse)
-                ? OverlayTexture.pack(OverlayTexture.u(1.0F), 10)
-                : LivingEntityRenderer.getOverlayCoords(state, 0.0F);
+            final int overlay = overlay(state);
             if (state.containedBlock != null) {
                 poseStack.pushPose();
                 poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
@@ -206,12 +254,67 @@ final class SulfurCubeRenderer extends MobRenderer<Slime, SulfurCubeRenderer.Sta
                     poseStack.scale(0.5F, 0.5F, 0.5F);
                 }
                 poseStack.translate(-0.5F, -0.518F, -0.5F);
+                //#if MC >= 260100
+                //$$ state.block.submit(poseStack, collector, state.lightCoords, overlay, state.outlineColor);
+                //#else
                 collector.submitBlock(poseStack, state.containedBlock, state.lightCoords, overlay, state.outlineColor);
+                //#endif
                 poseStack.popPose();
             } else if (!state.isInvisible) {
                 collector.order(-1).submitModel(state.isBaby ? this.smallModel : this.normalModel, state, poseStack,
                     RenderTypes.entityTranslucent(state.isBaby ? SMALL_INNER_TEXTURE : INNER_TEXTURE), light, overlay, state.outlineColor, null);
             }
         }
+        //#else
+        //$$ @Override
+        //$$ public void render(final PoseStack poseStack, final MultiBufferSource buffers, final int light, final State state,
+        //$$                    final float yRot, final float xRot) {
+        //$$     if (state.wornHeadType != null) {
+        //$$         return;
+        //$$     }
+        //$$     final int overlay = overlay(state);
+        //$$     if (state.containedBlock != null) {
+        //$$         poseStack.pushPose();
+        //$$         poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+        //$$         if (state.isBaby) {
+        //$$             poseStack.scale(0.5F, 0.5F, 0.5F);
+        //$$         }
+        //$$         poseStack.translate(-0.5F, -0.518F, -0.5F);
+        //$$         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(state.containedBlock, poseStack, buffers, light, overlay);
+        //$$         poseStack.popPose();
+        //$$     } else if (!state.isInvisible) {
+        //$$         (state.isBaby ? this.smallModel : this.normalModel).renderToBuffer(poseStack,
+        //$$             buffers.getBuffer(RenderType.entityTranslucent(state.isBaby ? SMALL_INNER_TEXTURE : INNER_TEXTURE)), light, overlay);
+        //$$     }
+        //$$ }
+        //#endif
     }
+
+    /** Destello blanco con la mecha encendida, como la TNT. */
+    static int overlay(final State state) {
+        return state.fuse > 0.0F && lit(state.fuse)
+            ? OverlayTexture.pack(OverlayTexture.u(1.0F), 10)
+            : LivingEntityRenderer.getOverlayCoords(state, 0.0F);
+    }
+
+    //#if MC < 12109
+    //$$ /** La capa de fuera, translucida (antes de 1.21.9, en lugar del modelo principal). */
+    //$$ static final class OuterLayer extends RenderLayer<State, CubeModel> {
+    //$$     private final SulfurCubeRenderer renderer;
+    //$$
+    //$$     OuterLayer(final SulfurCubeRenderer renderer) {
+    //$$         super(renderer);
+    //$$         this.renderer = renderer;
+    //$$     }
+    //$$
+    //$$     @Override
+    //$$     public void render(final PoseStack poseStack, final MultiBufferSource buffers, final int light, final State state,
+    //$$                        final float yRot, final float xRot) {
+    //$$         if (!state.isInvisible) {
+    //$$             this.getParentModel().renderToBuffer(poseStack,
+    //$$                 buffers.getBuffer(RenderType.entityTranslucent(this.renderer.getTextureLocation(state))), light, overlay(state));
+    //$$         }
+    //$$     }
+    //$$ }
+    //#endif
 }

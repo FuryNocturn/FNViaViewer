@@ -1,7 +1,9 @@
 package es.furynocturn.viaviewer.mixin;
 
 import es.furynocturn.viaviewer.entity.NewEntityRenderers;
+//#if MC < 260100
 import es.furynocturn.viaviewer.entity.baby.BabyRenderers;
+//#endif
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -19,9 +21,12 @@ public abstract class MixinEntityRenderDispatcher {
         at = @At("HEAD"), cancellable = true)
     private void fnviaviewer$newEntity(Entity entity, CallbackInfoReturnable<EntityRenderer<?, ?>> cir) {
         EntityRenderer<?, ?> renderer = NewEntityRenderers.forEntity(entity);
+        // Las crias de 26.x ya vienen de serie desde 26.1
+        //#if MC < 260100
         if (renderer == null) {
             renderer = BabyRenderers.forEntity(entity);
         }
+        //#endif
         if (renderer != null) {
             cir.setReturnValue(renderer);
         }
@@ -34,9 +39,11 @@ public abstract class MixinEntityRenderDispatcher {
             cir.setReturnValue(marked.renderer());
             return;
         }
+        //#if MC < 260100
         final EntityRenderer<?, ?> baby = BabyRenderers.forState(state);
         if (baby != null) {
             cir.setReturnValue(baby);
         }
+        //#endif
     }
 }

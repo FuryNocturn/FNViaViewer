@@ -1,7 +1,9 @@
 package es.furynocturn.viaviewer.mixin;
 
 import es.furynocturn.viaviewer.entity.NewEntityRenderers;
+//#if MC < 260100
 import es.furynocturn.viaviewer.entity.baby.BabyRenderers;
+//#endif
 import java.util.Map;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -20,6 +22,8 @@ public abstract class MixinEntityRenderers {
     private static void fnviaviewer$createNewRenderers(EntityRendererProvider.Context context,
                                                        CallbackInfoReturnable<Map<EntityType<?>, EntityRenderer<?, ?>>> cir) {
         NewEntityRenderers.create(context);
+        //#if MC < 260100
         BabyRenderers.create(context);
+        //#endif
     }
 }

@@ -29,7 +29,9 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.BedBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.CeilingHangingSignBlock;
+//#if MC >= 12109
 import net.minecraft.world.level.block.ShelfBlock;
+//#endif
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.StandingSignBlock;
 import net.minecraft.world.level.block.UntintedParticleLeavesBlock;
@@ -131,16 +133,29 @@ public final class NewContent implements ModInitializer {
             PotentSulfurBlockEntity.setType(type);
             BLOCK_ENTITIES.add(type);
         }
+        //#if MC >= 260200
+        //$$ supported(net.minecraft.world.level.block.entity.BlockEntityTypes.SIGN, blocks, "minecraft:poplar_sign", "minecraft:poplar_wall_sign");
+        //$$ supported(net.minecraft.world.level.block.entity.BlockEntityTypes.HANGING_SIGN, blocks, "minecraft:poplar_hanging_sign", "minecraft:poplar_wall_hanging_sign");
+        //$$ supported(net.minecraft.world.level.block.entity.BlockEntityTypes.SHELF, blocks, "minecraft:poplar_shelf");
+        //#else
         supported(BlockEntityType.SIGN, blocks, "minecraft:poplar_sign", "minecraft:poplar_wall_sign");
         supported(BlockEntityType.HANGING_SIGN, blocks, "minecraft:poplar_hanging_sign", "minecraft:poplar_wall_hanging_sign");
+        //#endif
+        // Las estanterias llegaron en 1.21.9: antes, la de alamo es un bloque normal con su modelo (sin objetos encima)
+        //#if MC >= 12109 && MC < 260200
         supported(BlockEntityType.SHELF, blocks, "minecraft:poplar_shelf");
+        //#endif
     }
 
     private static void supported(final BlockEntityType<?> type, final Map<String, Block> blocks, final String... ids) {
         for (final String id : ids) {
             final Block block = blocks.get(id);
             if (block != null) {
+                //#if MC >= 260100
+                //$$ type.addValidBlock(block);
+                //#else
                 type.addSupportedBlock(block);
+                //#endif
             }
         }
     }
@@ -233,14 +248,20 @@ public final class NewContent implements ModInitializer {
             case "minecraft:poplar_wall_sign" -> new WallSignBlock(poplar(), props);
             case "minecraft:poplar_hanging_sign" -> new CeilingHangingSignBlock(poplar(), props);
             case "minecraft:poplar_wall_hanging_sign" -> new WallHangingSignBlock(poplar(), props);
+            //#if MC >= 12109
             case "minecraft:poplar_shelf" -> new ShelfBlock(props);
+            //#endif
             // Sin entidad de bloque: en 26.2+ las camas no la tienen y BED no admite este bloque (crash al colocarla)
+            //#if MC >= 260200
+            //$$ case "minecraft:straw_bed" -> new BedBlock(DyeColor.YELLOW, props);
+            //#else
             case "minecraft:straw_bed" -> new BedBlock(DyeColor.YELLOW, props) {
                 @Override
                 public net.minecraft.world.level.block.entity.BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
                     return null;
                 }
             };
+            //#endif
             case "minecraft:red_poplar_leaves", "minecraft:orange_poplar_leaves", "minecraft:yellow_poplar_leaves" ->
                 new UntintedParticleLeavesBlock(0.01F, NewParticles.simple(id), props);
             case "minecraft:potent_sulfur" -> PotentSulfurBlock.create(properties.getFirst(), props);

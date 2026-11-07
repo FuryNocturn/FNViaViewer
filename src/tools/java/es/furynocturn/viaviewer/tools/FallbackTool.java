@@ -150,9 +150,10 @@ public final class FallbackTool {
             final String name = last.getParticleMappings().mappedIdentifier(nativeParticles + d);
             check(descriptor.particles().get(d).id().equals(name), "nombre de la particula " + descriptor.particles().get(d).id() + " = " + name);
         }
-        // Las particulas con bloque o item siguen reconociendose despues de rehacer ParticleMappings
-        check(last.getParticleMappings().isBlockParticle(last.getParticleMappings().mappedId("block")), "particula block sigue siendo de bloque");
-        check(last.getParticleMappings().isItemParticle(last.getParticleMappings().mappedId("item")), "particula item sigue siendo de item");
+        // Las particulas con bloque o item siguen reconociendose despues de rehacer ParticleMappings.
+        // Via las mira por el ID que llega (lado del servidor del paso), no por el del cliente.
+        check(last.getParticleMappings().isBlockParticle(last.getParticleMappings().id("block")), "particula block sigue siendo de bloque");
+        check(last.getParticleMappings().isItemParticle(last.getParticleMappings().id("item")), "particula item sigue siendo de item");
         check(last.getBlockStateMappings().mappedSize() == nativeStates + states, "mappedSize final de estados");
         for (int d = 0; d < descriptor.items().size(); d++) {
             final String name = last.getFullItemMappings().mappedIdentifier(nativeItems + d);

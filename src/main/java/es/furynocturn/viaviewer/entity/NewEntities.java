@@ -1,11 +1,15 @@
 package es.furynocturn.viaviewer.entity;
 
+import com.viaversion.viabackwards.protocol.v1_21_11to1_21_9.Protocol1_21_11To1_21_9;
+import com.viaversion.viabackwards.protocol.v1_21_9to1_21_7.Protocol1_21_9To1_21_7;
 import com.viaversion.viabackwards.protocol.v26_2to26_1.Protocol26_2To26_1;
 import com.viaversion.viabackwards.protocol.v26_3to26_2.Protocol26_3To26_2;
 import com.viaversion.viaversion.api.Via;
 import com.viaversion.viaversion.api.connection.UserConnection;
 import com.viaversion.viaversion.api.data.entity.EntityTracker;
 import com.viaversion.viaversion.api.minecraft.entities.EntityType;
+import com.viaversion.viaversion.api.minecraft.entities.EntityTypes1_21_11;
+import com.viaversion.viaversion.api.minecraft.entities.EntityTypes1_21_9;
 import com.viaversion.viaversion.api.minecraft.entities.EntityTypes26_2;
 import com.viaversion.viaversion.api.minecraft.entities.EntityTypes26_3;
 import com.viaversion.viaversion.api.minecraft.entitydata.EntityDataType;
@@ -32,13 +36,22 @@ import org.jspecify.annotations.Nullable;
  */
 public final class NewEntities {
 
-    public enum Kind { POPLAR_BOAT, POPLAR_CHEST_BOAT, CUSHION, SULFUR_CUBE }
+    /** Y mobs de 1.21.9-1.21.11 que el cliente aun no tiene (nautilus -> calamar, golem de cobre -> rana...). */
+    public enum Kind { POPLAR_BOAT, POPLAR_CHEST_BOAT, CUSHION, SULFUR_CUBE, NAUTILUS, ZOMBIE_NAUTILUS, CAMEL_HUSK, PARCHED, COPPER_GOLEM }
+
+    private static final Map<EntityType, Kind> KINDS = Map.of(
+        EntityTypes26_3.POPLAR_BOAT, Kind.POPLAR_BOAT, EntityTypes26_3.POPLAR_CHEST_BOAT, Kind.POPLAR_CHEST_BOAT,
+        EntityTypes26_3.CUSHION, Kind.CUSHION, EntityTypes26_3.SULFUR_CUBE, Kind.SULFUR_CUBE,
+        EntityTypes26_3.NAUTILUS, Kind.NAUTILUS, EntityTypes26_3.ZOMBIE_NAUTILUS, Kind.ZOMBIE_NAUTILUS,
+        EntityTypes26_3.CAMEL_HUSK, Kind.CAMEL_HUSK, EntityTypes26_3.PARCHED, Kind.PARCHED, EntityTypes26_3.COPPER_GOLEM, Kind.COPPER_GOLEM);
 
     private static volatile @Nullable UserConnection connection;
     private static @Nullable Protocol26_3To26_2 protocol;
     private static final Map<Integer, DyeColor> CUSHION_COLORS = new ConcurrentHashMap<>();
     private static final Map<Integer, Boolean> CUBE_BABIES = new ConcurrentHashMap<>();
     private static final Map<Integer, Fuse> CUBE_FUSES = new ConcurrentHashMap<>();
+    private static final Map<Integer, Integer> GOLEM_WEATHERING = new ConcurrentHashMap<>();
+    private static final Map<Integer, Integer> NAUTILUS_VARIANTS = new ConcurrentHashMap<>();
 
     /** Mecha de un sulfur cube: la manda el servidor al encenderse y el cliente la descuenta cada tick. */
     static final class Fuse {
@@ -58,6 +71,8 @@ public final class NewEntities {
         CUSHION_COLORS.clear();
         CUBE_BABIES.clear();
         CUBE_FUSES.clear();
+        GOLEM_WEATHERING.clear();
+        NAUTILUS_VARIANTS.clear();
     }
 
     /** Antes que los filtros de ViaBackwards que los borran, se apuntan el color del cojin y la cria y la mecha del sulfur cube. */
@@ -76,6 +91,8 @@ public final class NewEntities {
                 }
             }).build();
         addFirst(rewriter, filter);
+
+        captureOlderMobs();
 
         final Protocol26_2To26_1 older = Via.getManager().getProtocolManager().getProtocol(Protocol26_2To26_1.class);
         if (older == null || !(older.getEntityRewriter() instanceof EntityRewriter<?, ?> olderRewriter)) {
@@ -97,6 +114,29 @@ public final class NewEntities {
                 }
             }
         }).build());
+    }
+
+    /**
+     * Mobs de 1.21.9-1.21.11 (solo pasan por aqui con clientes que no los tienen): ViaBackwards quita la
+     * oxidacion del golem de cobre (indice 16 de 1.21.9) y la variante del zombie nautilus (20 de 1.21.11).
+     */
+    private static void captureOlderMobs() throws ReflectiveOperationException {
+        final Protocol1_21_11To1_21_9 nautilus = Via.getManager().getProtocolManager().getProtocol(Protocol1_21_11To1_21_9.class);
+        if (nautilus != null && nautilus.getEntityRewriter() instanceof EntityRewriter<?, ?> rewriter) {
+            addFirst(rewriter, rewriter.filter().type(EntityTypes1_21_11.ZOMBIE_NAUTILUS).index(20).handlerNoRegister((event, data) -> {
+                if (event.user() == connection && data.getValue() instanceof Integer variant) {
+                    NAUTILUS_VARIANTS.put(event.entityId(), variant);
+                }
+            }).build());
+        }
+        final Protocol1_21_9To1_21_7 golem = Via.getManager().getProtocolManager().getProtocol(Protocol1_21_9To1_21_7.class);
+        if (golem != null && golem.getEntityRewriter() instanceof EntityRewriter<?, ?> rewriter) {
+            addFirst(rewriter, rewriter.filter().type(EntityTypes1_21_9.COPPER_GOLEM).index(16).handlerNoRegister((event, data) -> {
+                if (event.user() == connection && data.getValue() instanceof Integer weathering) {
+                    GOLEM_WEATHERING.put(event.entityId(), weathering);
+                }
+            }).build());
+        }
     }
 
     private static void addFirst(final EntityRewriter<?, ?> rewriter, final EntityDataFilter filter) throws ReflectiveOperationException {
@@ -125,20 +165,11 @@ public final class NewEntities {
         } catch (final RuntimeException e) {
             return null; // el hilo de red esta cambiando el mapa justo ahora: se dibuja el sustituto este frame
         }
-        if (type == EntityTypes26_3.POPLAR_BOAT) {
-            return Kind.POPLAR_BOAT;
-        }
-        if (type == EntityTypes26_3.POPLAR_CHEST_BOAT) {
-            return Kind.POPLAR_CHEST_BOAT;
-        }
-        if (type == EntityTypes26_3.SULFUR_CUBE) {
-            return Kind.SULFUR_CUBE;
-        }
-        return type == EntityTypes26_3.CUSHION ? Kind.CUSHION : null;
+        return type != null ? KINDS.get(type) : null;
     }
 
     /** ViaBackwards pone el nombre del tipo real ("Cushion", "Sulfur Cube") como nombre visible: no es un nombre del jugador. */
-    static boolean hasReplacementName(final Entity entity, final String type) {
+    public static boolean hasReplacementName(final Entity entity, final String type) {
         final Component name = entity.getCustomName();
         if (name == null) {
             return false;
@@ -162,6 +193,19 @@ public final class NewEntities {
             fuse.startTick = entity.tickCount;
         }
         return Math.max(0, fuse.max - (entity.tickCount - fuse.startTick)) - partialTick + 1.0F;
+    }
+
+    /** Oxidacion del golem de cobre: 0 normal, 1 expuesto, 2 erosionado, 3 oxidado. */
+    public static int golemWeathering(final Entity entity) {
+        return GOLEM_WEATHERING.getOrDefault(entity.getId(), 0);
+    }
+
+    /**
+     * Variante del zombie nautilus: true si es la de coral (warm).
+     * shortcut: el ID sale del registro que manda el servidor en orden alfabetico (temperate 0, warm 1); si 26.x anade variantes, leer el registro
+     */
+    public static boolean warmZombieNautilus(final Entity entity) {
+        return NAUTILUS_VARIANTS.getOrDefault(entity.getId(), 0) == 1;
     }
 
     static DyeColor cushionColor(final Entity entity) {

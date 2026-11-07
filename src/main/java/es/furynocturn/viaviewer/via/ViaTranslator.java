@@ -37,7 +37,8 @@ import org.slf4j.LoggerFactory;
 public final class ViaTranslator {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("FNViaViewer");
-    public static final ProtocolVersion NATIVE_VERSION = ProtocolVersion.v1_21_11;
+    /** La version de este cliente (cada jar es de una version; Via la conoce por su protocolo). */
+    public static final ProtocolVersion NATIVE_VERSION = ProtocolVersion.getProtocol(SharedConstants.getProtocolVersion());
     /** Version del servidor a la que traduce Via en este canal. */
     public static final AttributeKey<ProtocolVersion> TARGET_VERSION = AttributeKey.newInstance("fnviaviewer-target");
 
@@ -47,8 +48,8 @@ public final class ViaTranslator {
     }
 
     public static void init(final Path dataFolder) {
-        if (SharedConstants.getProtocolVersion() != NATIVE_VERSION.getOriginalVersion()) {
-            throw new IllegalStateException("FNViaViewer solo funciona en " + NATIVE_VERSION);
+        if (!NATIVE_VERSION.isKnown()) {
+            throw new IllegalStateException("Via no conoce el protocolo de este cliente: " + SharedConstants.getProtocolVersion());
         }
         CompletableFuture.runAsync(() -> {
             ViaManagerImpl.initAndLoad(

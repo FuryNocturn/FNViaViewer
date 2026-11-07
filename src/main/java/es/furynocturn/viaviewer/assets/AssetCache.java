@@ -39,8 +39,36 @@ public final class AssetCache {
     private static final String OBJECTS = "https://resources.download.minecraft.net/";
     private static final String PREFIX = "assets/minecraft/";
     private static final List<String> FOLDERS = List.of("blockstates/", "models/", "items/", "textures/", "particles/");
+    private static final String BEDROCK_COMMIT = "15701fa9c13923f12662984c32c124327e40e3d3";
+    /** {ruta en resource_pack/, SHA-1}. Solo los mobs nuevos para este cliente (1.21.11 los trae todos). */
+    private static final String[][] BEDROCK_FILES = {
+        //#if MC < 12111
+        //$$ {"models/entity/nautilus.geo.json", "6845a53ea120109677d3f25fc419f15e4f602a50"},
+        //$$ {"models/entity/nautilus_baby.geo.json", "6446402798d711d5770429cb3ad33cf6e072a5a2"},
+        //$$ {"models/entity/zombie_nautilus_coral.geo.json", "fb3f86482620f01af81424030f704bff428ba5ff"},
+        //$$ {"models/entity/parched.geo.json", "0e7c16ee4fd0368d40559afb25e9df67593c0b61"},
+        //$$ {"animations/nautilus.animation.json", "22b5494926998f487e303840d181d3e58e59c5ae"},
+        //#endif
+        //#if MC < 12109
+        //$$ {"models/entity/copper_golem.geo.json", "1cd794f1f0a3bfb887f961a581445add1f97d808"},
+        //$$ {"animations/copper_golem.animation.json", "ce75ed25905fd750c4b90f28dd7dd86dfba275af"},
+        //#endif
+    };
     /** Sube cuando cambia lo que se saca del client.jar (2: particles/): las caches viejas se rehacen. */
-    private static final int CLIENT_FORMAT = 2;
+    //#if MC >= 12111
+    /** Si el cliente acepta cubos girados mas de 45 grados (desde 1.21.11); si no, ModelRotations los convierte. */
+    private static final boolean FREE_ROTATIONS = true;
+    //#else
+    //$$ private static final boolean FREE_ROTATIONS = false;
+    //#endif
+    //#if MC >= 12109
+    /** Si el cliente conoce lo de las definiciones de item de 1.21.9 (contexto on_shelf...); si no, ItemDefinitions. */
+    private static final boolean SHELF_ITEMS = true;
+    //#else
+    //$$ private static final boolean SHELF_ITEMS = false;
+    //#endif
+    /** Sube cuando cambia lo que se saca del client.jar: la cache se rehace. 3: giros convertidos; 6: y definiciones de item y paletas. */
+    private static final int CLIENT_FORMAT = FREE_ROTATIONS ? 2 : SHELF_ITEMS ? 3 : 6;
     private static final Pattern SAFE_PATH = Pattern.compile("[a-z0-9_./-]+");
     private static final Gson GSON = new Gson();
     private static final org.slf4j.Logger LOGGER = es.furynocturn.viaviewer.via.ViaTranslator.LOGGER;
@@ -75,6 +103,12 @@ public final class AssetCache {
         boolean changed = false;
 
         if (!state.has("client_format") || state.get("client_format").getAsInt() < CLIENT_FORMAT) {
+            if (state.has("client_format")) {
+                // Formato viejo: fuera todo (quedarian ficheros que este cliente ya no puede leer) y se baja de nuevo
+                this.clear();
+                state.remove("sounds");
+                state.add("langs", new JsonArray());
+            }
             this.extractClientJar();
             state.remove("client");
             state.addProperty("client_format", CLIENT_FORMAT);
@@ -84,6 +118,12 @@ public final class AssetCache {
         if (!state.has("sounds")) {
             this.downloadSounds();
             state.addProperty("sounds", true);
+            save(statePath, state);
+            changed = true;
+        }
+        if (BEDROCK_FILES.length > 0 && !BEDROCK_COMMIT.equals(state.has("bedrock") ? state.get("bedrock").getAsString() : "")) {
+            this.downloadBedrock();
+            state.addProperty("bedrock", BEDROCK_COMMIT);
             save(statePath, state);
             changed = true;
         }
@@ -116,21 +156,34 @@ public final class AssetCache {
         final JsonObject client = this.versionMeta(this.version).getAsJsonObject("downloads").getAsJsonObject("client");
         final byte[] jar = this.download(client.get("url").getAsString(), client.get("sha1").getAsString());
         int written = 0;
+        final List<byte[]> atlases = new java.util.ArrayList<>();
+        final java.util.Set<String> names = new java.util.HashSet<>();
         try (ZipInputStream zip = new ZipInputStream(new ByteArrayInputStream(jar))) {
             ZipEntry entry;
             while ((entry = zip.getNextEntry()) != null) {
                 final String name = entry.getName();
+                names.add(name);
                 if (entry.isDirectory() || !name.startsWith(PREFIX) || !SAFE_PATH.matcher(name).matches() || name.contains("..")) {
                     continue;
                 }
                 final String path = name.substring(PREFIX.length());
-                if (path.equals("lang/en_us.json")) {
+                if (path.startsWith("atlases/") && path.endsWith(".json")) {
+                    atlases.add(zip.readAllBytes());
+                } else if (path.equals("lang/en_us.json")) {
                     this.writeNewKeys(path, zip.readAllBytes(), vanillaResource(name));
                 } else if (FOLDERS.stream().anyMatch(path::startsWith) && Minecraft.class.getResource("/" + name) == null) {
-                    this.write(name, zip.readAllBytes());
+                    final byte[] data = this.convert(path, zip.readAllBytes());
+                    if (data == null) {
+                        continue;
+                    }
+                    this.write(name, data);
                     written++;
                 }
             }
+        }
+        for (final Map.Entry<String, byte[]> atlas : TrimPalettes.extensions(TrimPalettes.permutations(atlases, names)).entrySet()) {
+            this.write(atlas.getKey(), atlas.getValue());
+            written++;
         }
         LOGGER.info("{}: {} ficheros nuevos del client.jar", this.version, written);
     }
@@ -247,6 +300,39 @@ public final class AssetCache {
             throw new IOException("SHA-1 incorrecto en " + url);
         }
         return response.body();
+    }
+
+    /**
+     * Modelos y animaciones de Bedrock (Mojang/bedrock-samples) de los mobs que este cliente no tiene:
+     * se dibujan con ellos en lugar del sustituto de ViaBackwards (entity/bedrock). Fijados a un commit
+     * y comprobados con su SHA-1.
+     */
+    private void downloadBedrock() throws IOException, InterruptedException {
+        for (final String[] file : BEDROCK_FILES) {
+            final byte[] data = this.download("https://raw.githubusercontent.com/Mojang/bedrock-samples/" + BEDROCK_COMMIT
+                + "/resource_pack/" + file[0], file[1]);
+            this.write("bedrock/" + file[0].substring(file[0].lastIndexOf('/') + 1), data);
+        }
+        LOGGER.info("{}: {} modelos y animaciones de Bedrock", this.version, BEDROCK_FILES.length);
+    }
+
+    /** Un fichero de Bedrock de la cache (models/entity/x.geo.json -> bedrock/x.geo.json). */
+    public static Path bedrockFile(final String version, final String name) {
+        return packDir(version).resolve("bedrock").resolve(name);
+    }
+
+    /** El fichero en el formato de este cliente, o null si no lo puede usar. */
+    private byte[] convert(final String path, final byte[] data) {
+        if (!path.endsWith(".json")) {
+            return data;
+        }
+        if (!FREE_ROTATIONS && path.startsWith("models/")) {
+            return ModelRotations.convert(data);
+        }
+        if (!SHELF_ITEMS && path.startsWith("items/")) {
+            return ItemDefinitions.convert(data);
+        }
+        return data;
     }
 
     private void write(final String relative, final byte[] data) throws IOException {

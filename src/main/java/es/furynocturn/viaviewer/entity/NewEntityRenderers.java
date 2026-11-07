@@ -14,13 +14,19 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.object.boat.BoatModel;
+//#if MC >= 12109
 import net.minecraft.client.renderer.SubmitNodeCollector;
+//#else
+//$$ import net.minecraft.client.renderer.MultiBufferSource;
+//#endif
 import net.minecraft.client.renderer.entity.BoatRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.BoatRenderState;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
+//#if MC >= 12109
 import net.minecraft.client.renderer.state.CameraRenderState;
+//#endif
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -57,10 +63,13 @@ public final class NewEntityRenderers {
         EntityModelLayerRegistry.registerModelLayer(POPLAR_BOAT, BoatModel::createBoatModel);
         EntityModelLayerRegistry.registerModelLayer(POPLAR_CHEST_BOAT, BoatModel::createChestBoatModel);
         EntityModelLayerRegistry.registerModelLayer(CUSHION, CushionModel::createLayer);
+        // El sulfur cube viene de serie desde 26.2
+        //#if MC < 260200
         EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.OUTER, () -> SulfurCubeRenderer.cube(0, 9.0F, 128));
         EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.INNER, () -> SulfurCubeRenderer.cube(36, 8.0F, 128));
         EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.SMALL_OUTER, () -> SulfurCubeRenderer.cube(0, 5.0F, 64));
         EntityModelLayerRegistry.registerModelLayer(SulfurCubeRenderer.SMALL_INNER, () -> SulfurCubeRenderer.cube(20, 4.0F, 64));
+        //#endif
     }
 
     /** Se rehacen con cada recarga de recursos, junto a los vanilla. */
@@ -68,7 +77,13 @@ public final class NewEntityRenderers {
         RENDERERS.put(NewEntities.Kind.POPLAR_BOAT, new PoplarBoatRenderer(context, POPLAR_BOAT));
         RENDERERS.put(NewEntities.Kind.POPLAR_CHEST_BOAT, new PoplarBoatRenderer(context, POPLAR_CHEST_BOAT));
         RENDERERS.put(NewEntities.Kind.CUSHION, new CushionRenderer(context));
+        //#if MC < 260200
         RENDERERS.put(NewEntities.Kind.SULFUR_CUBE, new SulfurCubeRenderer(context));
+        //#endif
+        // Mobs de 1.21.9-1.21.11: solo en los clientes que aun no los tienen
+        //#if MC < 12111
+        //$$ es.furynocturn.viaviewer.entity.bedrock.BedrockMobs.create(context, RENDERERS);
+        //#endif
     }
 
     public static @Nullable EntityRenderer<?, ?> forEntity(final Entity entity) {
@@ -76,6 +91,11 @@ public final class NewEntityRenderers {
         if (kind == NewEntities.Kind.SULFUR_CUBE && !(entity instanceof Slime)) {
             return null;
         }
+        //#if MC < 12111
+        //$$ if (kind != null && !es.furynocturn.viaviewer.entity.bedrock.BedrockMobs.isReplacement(kind, entity)) {
+        //$$     return null;
+        //$$ }
+        //#endif
         return kind != null ? RENDERERS.get(kind) : null;
     }
 
@@ -159,6 +179,7 @@ public final class NewEntityRenderers {
             }
         }
 
+        //#if MC >= 12109
         @Override
         public void submit(final CushionState state, final PoseStack poseStack, final SubmitNodeCollector collector, final CameraRenderState camera) {
             poseStack.pushPose();
@@ -170,5 +191,17 @@ public final class NewEntityRenderers {
             poseStack.popPose();
             super.submit(state, poseStack, collector, camera);
         }
+        //#else
+        //$$ @Override
+        //$$ public void render(final CushionState state, final PoseStack poseStack, final MultiBufferSource buffers, final int light) {
+        //$$     poseStack.pushPose();
+        //$$     poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - state.direction.toYRot()));
+        //$$     poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
+        //$$     poseStack.translate(0.0, -0.25, 0.0);
+        //$$     this.model.renderToBuffer(poseStack, buffers.getBuffer(this.model.renderType(state.texture)), light, OverlayTexture.NO_OVERLAY);
+        //$$     poseStack.popPose();
+        //$$     super.render(state, poseStack, buffers, light);
+        //$$ }
+        //#endif
     }
 }

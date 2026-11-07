@@ -9,7 +9,9 @@ import io.netty.channel.ChannelFuture;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import net.minecraft.network.Connection;
+//#if MC >= 12111
 import net.minecraft.server.network.EventLoopGroupHolder;
+//#endif
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,10 +20,23 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(targets = "net.minecraft.client.gui.screens.ConnectScreen$1")
 public abstract class MixinConnectScreen_1 {
 
+    //#if MC >= 12111
     @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;Lnet/minecraft/server/network/EventLoopGroupHolder;Lnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"))
     private ChannelFuture fnviaviewer$chooseVersion(InetSocketAddress address, EventLoopGroupHolder group, Connection connection, Operation<ChannelFuture> original) {
-        ((IConnection) connection).fnviaviewer$setTarget(ViaTranslator.targetFor(this.fnviaviewer$serverProtocol(address)));
+        this.fnviaviewer$chooseVersion(address, connection);
         return original.call(address, group, connection);
+    }
+    //#else
+    //$$ @WrapOperation(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/Connection;connect(Ljava/net/InetSocketAddress;ZLnet/minecraft/network/Connection;)Lio/netty/channel/ChannelFuture;"))
+    //$$ private ChannelFuture fnviaviewer$chooseVersion(InetSocketAddress address, boolean nativeTransport, Connection connection, Operation<ChannelFuture> original) {
+    //$$     this.fnviaviewer$chooseVersion(address, connection);
+    //$$     return original.call(address, nativeTransport, connection);
+    //$$ }
+    //#endif
+
+    @Unique
+    private void fnviaviewer$chooseVersion(final InetSocketAddress address, final Connection connection) {
+        ((IConnection) connection).fnviaviewer$setTarget(ViaTranslator.targetFor(this.fnviaviewer$serverProtocol(address)));
     }
 
     @Unique

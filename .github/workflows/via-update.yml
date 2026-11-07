@@ -1,5 +1,6 @@
 # Cuando sale un ViaVersion/ViaBackwards nuevo: sube la version en gradle.properties, pasa las
-# comprobaciones de fallbackTool, compila y deja un BORRADOR de release con el jar en una rama.
+# comprobaciones de fallbackTool de cada version de cliente, compila y deja un BORRADOR de release
+# con un jar por version (versions/<mc>/build/libs) en una rama.
 # Publicar (release y tiendas) lo hace una persona. Si algo falla, abre una incidencia.
 name: Actualizar Via
 
@@ -62,7 +63,8 @@ jobs:
         if: steps.check.outputs.update == 'true'
         with:
           distribution: temurin
-          java-version: "21"
+          # 26.x se compila con Java 25; las de 1.21 salen con release 21
+          java-version: "25"
           cache: gradle
 
       - name: Cambiar versiones
@@ -79,7 +81,7 @@ jobs:
         run: |
           set -o pipefail
           chmod +x gradlew
-          ./gradlew --no-daemon fallbackTool build 2>&1 | tee build.log
+          ./gradlew --no-daemon fallbackTool build universalJar 2>&1 | tee build.log
 
       - name: Rama y borrador de release
         if: steps.check.outputs.update == 'true' && steps.build.outcome == 'success'
@@ -92,10 +94,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
-          git add gradle.properties src/main/resources/fnviaviewer/content/26.3.json
+          git add gradle.properties content
           git commit -m "Via $VIA (FNViaViewer $MOD)"
           git push origin "$BRANCH"
-          gh release create "v$MOD" "build/libs/fnviaviewer-$MOD.jar" --draft --prerelease --target "$BRANCH" \
+          jars="build/libs/fnviaviewer-$MOD-universal.jar $(ls versions/*/build/libs/fnviaviewer-"$MOD"+*.jar | grep -v -- -sources)"
+          gh release create "v$MOD" $jars --draft --prerelease --target "$BRANCH" \
             --title "FNViaViewer $MOD" \
             --notes "Borrador automático: ViaVersion y ViaBackwards $VIA. fallbackTool y la compilación han pasado; falta probarlo en juego antes de publicar."
 

@@ -95,12 +95,16 @@ final class BabyLayers {
         map.put(ModelLayers.STRIDER_BABY, BabyStriderModel::createBodyLayer);
         map.put(ModelLayers.TURTLE_BABY, BabyTurtleModel::createBodyLayer);
         map.put(ModelLayers.VILLAGER_BABY, () -> LayerDefinition.create(BabyVillagerModel.createBodyModel(), 64, 64));
+        //#if MC >= 12109
         map.put(ModelLayers.VILLAGER_BABY_NO_HAT, () -> LayerDefinition.create(BabyVillagerModel.createNoHatModel(), 64, 64));
+        //#endif
         map.put(ModelLayers.WOLF_BABY, BabyWolfModel::createBodyLayer);
         map.put(ModelLayers.ZOMBIE_BABY, () -> BabyZombieModel.createBodyLayer(CubeDeformation.NONE));
         map.put(ModelLayers.HUSK_BABY, () -> BabyZombieModel.createBodyLayer(CubeDeformation.NONE));
         map.put(ModelLayers.ZOMBIE_VILLAGER_BABY, BabyZombieVillagerModel::createBodyLayer);
+        //#if MC >= 12109
         map.put(ModelLayers.ZOMBIE_VILLAGER_BABY_NO_HAT, BabyZombieVillagerModel::createNoHatLayer);
+        //#endif
         return map;
     }
 

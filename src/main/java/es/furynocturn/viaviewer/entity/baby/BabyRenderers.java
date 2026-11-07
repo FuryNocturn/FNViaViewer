@@ -2,7 +2,9 @@ package es.furynocturn.viaviewer.entity.baby;
 
 import es.furynocturn.viaviewer.config.ViewerConfig;
 import es.furynocturn.viaviewer.entity.NewEntities;
+//#if MC >= 12109
 import es.furynocturn.viaviewer.mixin.EntityRendererContextAccessor;
+//#endif
 import es.furynocturn.viaviewer.mixin.EntityRenderersAccessor;
 import es.furynocturn.viaviewer.mixin.ModelPartAccessor;
 import es.furynocturn.viaviewer.via.ViaTranslator;
@@ -56,10 +58,16 @@ public final class BabyRenderers {
         TEXTURES.clear();
         final Map<ModelLayerLocation, Supplier<LayerDefinition>> layers = BabyLayers.all();
         final BabyModelSet models = new BabyModelSet(context.getModelSet(), layers);
+        //#if MC >= 12109
         final EntityRendererProvider.Context babyContext = new EntityRendererProvider.Context(context.getEntityRenderDispatcher(),
             context.getItemModelResolver(), context.getMapRenderer(), context.getBlockRenderDispatcher(), context.getResourceManager(),
             models, context.getEquipmentAssets(), ((EntityRendererContextAccessor) context).fnviaviewer$atlasManager(), context.getFont(),
             context.getPlayerSkinRenderCache());
+        //#else
+        //$$ final EntityRendererProvider.Context babyContext = new EntityRendererProvider.Context(context.getEntityRenderDispatcher(),
+        //$$     context.getItemModelResolver(), context.getMapRenderer(), context.getBlockRenderDispatcher(), context.getResourceManager(),
+        //$$     models, context.getEquipmentAssets(), context.getFont());
+        //#endif
         EntityRenderersAccessor.fnviaviewer$providers().forEach((type, provider) -> {
             models.used = false;
             try {
