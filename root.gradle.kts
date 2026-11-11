@@ -76,6 +76,9 @@ tasks.register("universalJar") {
             // Obliga a que entre una de las versiones; si ninguna encaja, Fabric lo dice al arrancar
             "depends" to mapOf("fnviaviewer" to "*", "minecraft" to ">=1.21.7 <=26.2"),
             "jars" to (via.keys + inner.keys).map { mapOf("file" to it) },
+            // Mod Menu solo agrupa anidados con "fabric-loom:generated": sin esto salen dos FNViaViewer.
+            // El contenedor va como hijo (y librería) del mod real, que es el que tiene los ajustes.
+            "custom" to mapOf("modmenu" to mapOf("parent" to "fnviaviewer", "badges" to listOf("library"))),
         )
         val files = linkedMapOf<String, ByteArray>(
             "fabric.mod.json" to groovy.json.JsonOutput.prettyPrint(groovy.json.JsonOutput.toJson(meta)).toByteArray(),

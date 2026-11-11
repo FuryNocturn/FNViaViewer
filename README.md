@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/servidores-26.3-brightgreen" alt="Servidores 26.3">
   <img src="https://img.shields.io/badge/loader-Fabric-dbd0b4" alt="Fabric">
   <img src="https://img.shields.io/badge/licencia-GPL--3.0-red" alt="Licencia GPL-3.0">
-  <img src="https://img.shields.io/badge/versión-0.4.0-orange" alt="Versión">
+  <img src="https://img.shields.io/badge/versión-0.4.1-orange" alt="Versión">
 </p>
 
 ---

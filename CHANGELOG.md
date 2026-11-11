@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- Universal jar: Mod Menu showed FNViaViewer twice (the container and the mod itself). The container is now listed as a library under FNViaViewer, so there is only one entry, with the settings button.
+
 ## 0.4.0
 
 - More client versions. Besides 1.21.11, there are now builds for **26.2, 26.1.x (26.1–26.1.2), 1.21.9–1.21.10 and 1.21.7–1.21.8**, all joining 26.3 servers. Use the jar that matches your game version. Each one only adds what that version is missing up to 26.3.
